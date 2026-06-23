@@ -1,0 +1,32 @@
+# --index-url https://download.pytorch.org/whl/cu121
+# torch
+# torchvision
+# torchaudio
+numpy
+scipy
+pandas
+tqdm
+matplotlib
+pillow
+opencv-python-headless
+einops
+accelerate
+safetensors
+torchmetrics
+transformers
+datasets
+tokenizers
+huggingface_hub
+diffusers
+omegaconf
+pyyaml
+wandb
+tensorboard
+lpips
+clean-fid
+scikit-image
+scikit-learn
+albumentations
+webdataset
+ftfy
+regex
