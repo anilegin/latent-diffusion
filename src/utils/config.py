@@ -70,3 +70,10 @@ def resolve_path_key(cfg: dict[str, Any], key: str) -> Path:
     Resolve a path stored in config using dot notation.
     """
     return Path(get_by_key(cfg, key)).expanduser().resolve()
+
+def save_yaml(data: dict, path: str | Path) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, sort_keys=False)

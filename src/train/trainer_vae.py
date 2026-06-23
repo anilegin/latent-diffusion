@@ -232,7 +232,7 @@ class VAETrainer:
 
     def current_kl_weight(self) -> float:
         """
-        Linear KL warmup.
+        Linear KL warmup
 
         If kl_warmup_steps=0:
             immediately use base KL weight.
@@ -533,8 +533,6 @@ class VAETrainer:
             - epoch/global step
             - RNG states
             - early stopping state
-
-        Use this when continuing an interrupted run.
         """
         checkpoint_path = Path(checkpoint_path)
 
@@ -600,8 +598,6 @@ class VAETrainer:
             - scaler
             - RNG state
             - epoch
-
-        Use this when fine-tuning from a pretrained VAE checkpoint.
         """
         checkpoint_path = Path(checkpoint_path)
 

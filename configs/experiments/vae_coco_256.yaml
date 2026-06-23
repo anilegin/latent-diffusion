@@ -1,0 +1,61 @@
+defaults:
+  - ../paths.yaml
+  - ../data/coco_256.yaml
+  - ../model/vae_small.yaml
+
+experiment:
+  name: vae_coco_256_small
+
+train:
+  seed: 42
+  precision: bf16
+
+  batch_size: 64
+  num_workers: 8
+  max_epochs: 100
+
+  lr: 0.0001
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+
+  grad_clip: 1.0
+
+  log_every: 100
+  validate_every: 1
+  save_every: 1
+  sample_every: 1
+  num_sample_images: 8
+
+  output_dir_key: outputs.vae_dir
+
+  # If true, initialize Conv/Linear/Norm weights from scratch.
+  # When resuming or fine-tuning, script should set this to false automatically.
+  initialize_from_scratch: true
+
+  # Resume full training state:
+  # model + optimizer + scheduler + scaler + RNG + epoch + global_step.
+  resume_from: null
+
+  # Fine-tune from model weights only:
+  # model weights are loaded, but optimizer/scheduler/global_step are reset.
+  finetune_from: null
+
+early_stopping:
+  enabled: true
+  patience: 15
+  min_delta: 0.0
+  monitor_metric: val_total_loss
+
+loss:
+  recon_loss_type: l1
+  recon_weight: 1.0
+
+  use_lpips: true
+  lpips_net: vgg
+  perceptual_weight: 0.1
+
+  kl_weight: 0.000001
+  kl_warmup_steps: 10000
+
+optimizer:
+  name: adamw

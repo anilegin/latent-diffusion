@@ -1,0 +1,20 @@
+model:
+  name: autoencoder_kl
+
+  in_channels: 3
+  out_channels: 3
+
+  latent_channels: 8
+  base_channels: 128
+  channel_multipliers: [1, 2, 4, 4]
+  num_res_blocks: 3
+
+  dropout: 0.0
+
+  use_attention: true
+  attention_heads: 4
+
+  upsample_type: nearest_conv
+
+  # Later after training the VAE, we can compute latent std and update this.
+  scaling_factor: 1.0
