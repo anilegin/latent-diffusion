@@ -114,7 +114,6 @@ def build_model(cfg: dict) -> AutoencoderKL:
         dropout=float(m.get("dropout", 0.0)),
         use_attention=bool(m.get("use_attention", True)),
         attention_heads=int(m.get("attention_heads", 1)),
-        upsample_type=str(m.get("upsample_type", "nearest_conv")),
         scaling_factor=float(m.get("scaling_factor", 1.0)),
     )
 
