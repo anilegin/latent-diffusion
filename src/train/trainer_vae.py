@@ -142,6 +142,7 @@ class VAETrainer:
         num_sample_images: int = 8,
         kl_weight: float = 1e-6,
         kl_warmup_steps: int = 0,
+        gradient_accumulation_steps: int = 1,
         early_stopping_patience: int | None = None,
         early_stopping_min_delta: float = 0.0,
         monitor_metric: str = "val_total_loss",
@@ -168,6 +169,7 @@ class VAETrainer:
 
         self.base_kl_weight = kl_weight
         self.kl_warmup_steps = kl_warmup_steps
+        self.gradient_accumulation_steps = max(1, int(gradient_accumulation_steps))
 
         self.monitor_metric = monitor_metric
 
@@ -309,6 +311,8 @@ class VAETrainer:
             leave=False,
         )
 
+        self.optimizer.zero_grad(set_to_none=True)
+
         for batch_idx, batch in enumerate(progress):
             x = batch["image"].to(
                 self.device,
@@ -316,8 +320,6 @@ class VAETrainer:
             )
 
             kl_weight = self.current_kl_weight()
-
-            self.optimizer.zero_grad(set_to_none=True)
 
             with self.autocast_context():
                 x_recon, posterior, _ = self.model(
@@ -333,35 +335,47 @@ class VAETrainer:
                 )
 
                 loss = loss_out.total_loss
+                loss_for_backward = loss / self.gradient_accumulation_steps
+
+            should_step = (
+                (batch_idx + 1) % self.gradient_accumulation_steps == 0
+                or (batch_idx + 1) == len(self.train_loader)
+            )
 
             if self.scaler.is_enabled():
-                self.scaler.scale(loss).backward()
+                self.scaler.scale(loss_for_backward).backward()
 
-                if self.grad_clip is not None:
-                    self.scaler.unscale_(self.optimizer)
-                    torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(),
-                        self.grad_clip,
-                    )
+                if should_step:
+                    if self.grad_clip is not None:
+                        self.scaler.unscale_(self.optimizer)
+                        torch.nn.utils.clip_grad_norm_(
+                            self.model.parameters(),
+                            self.grad_clip,
+                        )
 
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                    self.optimizer.zero_grad(set_to_none=True)
 
             else:
-                loss.backward()
+                loss_for_backward.backward()
 
-                if self.grad_clip is not None:
-                    torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(),
-                        self.grad_clip,
-                    )
+                if should_step:
+                    if self.grad_clip is not None:
+                        torch.nn.utils.clip_grad_norm_(
+                            self.model.parameters(),
+                            self.grad_clip,
+                        )
 
-                self.optimizer.step()
+                    self.optimizer.step()
+                    self.optimizer.zero_grad(set_to_none=True)
 
-            if self.scheduler is not None:
+            if should_step and self.scheduler is not None:
                 self.scheduler.step()
 
-            self.global_step += 1
+            if should_step:
+                self.global_step += 1
+
             num_batches += 1
 
             total_loss_sum += float(loss_out.total_loss.detach().cpu())

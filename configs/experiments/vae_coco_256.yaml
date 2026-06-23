@@ -10,7 +10,8 @@ train:
   seed: 42
   precision: bf16
 
-  batch_size: 64
+  batch_size: 16
+  gradient_accumulation_steps: 4
   num_workers: 8
   max_epochs: 100
 

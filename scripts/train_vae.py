@@ -228,6 +228,7 @@ def main():
         num_sample_images=int(cfg["train"].get("num_sample_images", 8)),
         kl_weight=float(cfg["loss"].get("kl_weight", 1e-6)),
         kl_warmup_steps=int(cfg["loss"].get("kl_warmup_steps", 0)),
+        gradient_accumulation_steps=int(cfg["train"].get("gradient_accumulation_steps", 1)),
         early_stopping_patience=int(early_cfg.get("patience", 15)) if early_enabled else None,
         early_stopping_min_delta=float(early_cfg.get("min_delta", 0.0)),
         monitor_metric=str(early_cfg.get("monitor_metric", "val_total_loss")),
