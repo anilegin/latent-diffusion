@@ -5,7 +5,6 @@ logs/
 nltk_data/
 =2.1.0
 hf_token.txt
-models/
 ldm_env/
 .ldm_env/
 .env
