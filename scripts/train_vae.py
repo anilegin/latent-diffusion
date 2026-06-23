@@ -116,6 +116,7 @@ def build_model(cfg: dict) -> AutoencoderKL:
         use_attention=bool(m.get("use_attention", True)),
         attention_heads=int(m.get("attention_heads", 1)),
         scaling_factor=float(m.get("scaling_factor", 1.0)),
+        attention_resolutions=tuple(m.get("attention_resolutions", [32])),
     )
 
     return model

@@ -38,6 +38,7 @@ class AutoencoderKL(nn.Module):
         use_attention: bool = True,
         attention_heads: int = 4,
         scaling_factor: float = 1.0,
+        attention_resolutions: tuple[int, ...] = (32,),
     ):
         super().__init__()
 
@@ -58,6 +59,7 @@ class AutoencoderKL(nn.Module):
             dropout=dropout,
             use_attention=use_attention,
             attention_heads=attention_heads,
+            attention_resolutions= attention_resolutions
         )
 
         self.decoder = Decoder(

@@ -14,7 +14,7 @@ model:
   use_attention: true
   attention_heads: 4
 
-  upsample_type: nearest_conv
-
   # Later after training the VAE, we can compute latent std and update this.
   scaling_factor: 1.0
+
+attention_resolutions: [32]
