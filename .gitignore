@@ -9,3 +9,4 @@ ldm_env/
 .ldm_env/
 .env
 #outputs/
+logs/
