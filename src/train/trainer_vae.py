@@ -383,7 +383,7 @@ class VAETrainer:
             kl_loss_sum += float(loss_out.kl_loss.cpu())
             perceptual_loss_sum += float(loss_out.perceptual_loss.cpu())
 
-            if self.global_step % self.log_every == 0:
+            if batch_idx % self.log_every == 0:
                 progress.set_postfix(
                     {
                         "loss": total_loss_sum / num_batches,
@@ -391,6 +391,7 @@ class VAETrainer:
                         "kl": kl_loss_sum / num_batches,
                         "kl_w": kl_weight,
                         "perc": perceptual_loss_sum / num_batches,
+                        "step": self.global_step,
                     }
                 )
 
