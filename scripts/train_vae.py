@@ -4,6 +4,7 @@ import argparse
 import random
 import sys
 from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import torch
@@ -185,7 +186,8 @@ def main():
     output_dir = output_root / experiment_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    save_yaml(cfg, output_dir / "config_used.yaml")
+    date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    save_yaml(cfg, output_dir / f"config_used_{date_str}.yaml")
 
     print("Experiment:", experiment_name)
     print("Output dir:", output_dir)
