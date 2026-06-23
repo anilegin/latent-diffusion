@@ -37,7 +37,6 @@ class AutoencoderKL(nn.Module):
         dropout: float = 0.0,
         use_attention: bool = True,
         attention_heads: int = 4,
-        upsample_type: str = "nearest_conv",
         scaling_factor: float = 1.0,
     ):
         super().__init__()
@@ -70,7 +69,6 @@ class AutoencoderKL(nn.Module):
             dropout=dropout,
             use_attention=use_attention,
             attention_heads=attention_heads,
-            upsample_type=upsample_type,
         )
 
     def encode(
