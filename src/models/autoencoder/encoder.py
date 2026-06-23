@@ -39,6 +39,7 @@ class Encoder(nn.Module):
         dropout: float = 0.0,
         use_attention: bool = True,
         attention_heads: int = 4,
+        attention_resolutions: tuple[int, ...] = (32,),
     ):
         super().__init__()
 
@@ -47,6 +48,7 @@ class Encoder(nn.Module):
         self.base_channels = base_channels
         self.channel_multipliers = list(channel_multipliers)
         self.num_res_blocks = num_res_blocks
+        self.attention_resolutions = set(attention_resolutions)
 
         # Initial projection
         self.conv_in = nn.Conv2d(
@@ -81,7 +83,7 @@ class Encoder(nn.Module):
 
 
             # This part also adds attention to 64x64 resolution along with bottleneck.
-            if use_attention and current_resolution == 64:
+            if use_attention and current_resolution in self.attention_resolutions:
                 stage["attention"] = SelfAttentionBlock(
                     channels=current_channels,
                     num_heads=attention_heads,
