@@ -1,0 +1,11 @@
+defaults:
+  - ../paths.yaml
+
+dataset:
+  name: coco_captions
+  root_key: data.coco_root
+  train_split: train2017
+  val_split: val2017
+  resolution: 256
+  num_workers: 8
+  pin_memory: true

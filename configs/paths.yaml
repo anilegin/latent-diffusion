@@ -1,0 +1,16 @@
+project:
+  root: .
+
+data:
+  coco_root: /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017
+
+outputs:
+  root: outputs
+  vae_dir: outputs/vae
+  ldm_dir: outputs/ldm
+  latent_dir: outputs/latents
+  sample_dir: outputs/samples
+  log_dir: logs
+
+cache:
+  root: cache
