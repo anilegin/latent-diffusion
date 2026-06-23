@@ -45,8 +45,7 @@ class Decoder(nn.Module):
         num_res_blocks: int = 2,
         dropout: float = 0.0,
         use_attention: bool = True,
-        attention_heads: int = 1,
-        upsample_type: str = "nearest_conv",
+        attention_heads: int = 1
     ):
         super().__init__()
 
@@ -58,7 +57,6 @@ class Decoder(nn.Module):
         self.base_channels = base_channels
         self.channel_multipliers = list(channel_multipliers)
         self.num_res_blocks = num_res_blocks
-        self.upsample_type = upsample_type
 
         # Number of spatial upsampling operations
         # Example:
@@ -108,8 +106,7 @@ class Decoder(nn.Module):
             # Upsample after every stage except the full-resolution
             if level < len(reversed_multipliers) - 1:
                 upsample = Upsample(
-                    channels=current_channels,
-                    mode=upsample_type,
+                    channels=current_channels
                 )
             else:
                 upsample = nn.Identity()
