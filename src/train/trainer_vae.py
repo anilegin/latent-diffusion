@@ -580,13 +580,29 @@ class VAETrainer:
             np.random.set_state(checkpoint["numpy_random_state"])
 
         if checkpoint.get("torch_random_state") is not None:
-            torch.random.set_rng_state(checkpoint["torch_random_state"])
+            torch_state = checkpoint["torch_random_state"]
+
+            if not isinstance(torch_state, torch.Tensor):
+                torch_state = torch.tensor(torch_state, dtype=torch.uint8)
+
+            torch_state = torch_state.detach().cpu().to(dtype=torch.uint8)
+            torch.random.set_rng_state(torch_state)
 
         if (
             torch.cuda.is_available()
             and checkpoint.get("cuda_random_state") is not None
         ):
-            torch.cuda.set_rng_state_all(checkpoint["cuda_random_state"])
+            cuda_states = checkpoint["cuda_random_state"]
+
+            fixed_cuda_states = []
+            for state in cuda_states:
+                if not isinstance(state, torch.Tensor):
+                    state = torch.tensor(state, dtype=torch.uint8)
+
+                state = state.detach().cpu().to(dtype=torch.uint8)
+                fixed_cuda_states.append(state)
+
+            torch.cuda.set_rng_state_all(fixed_cuda_states)
 
         if (
             self.early_stopping is not None
