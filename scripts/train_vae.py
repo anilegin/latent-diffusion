@@ -164,6 +164,15 @@ def build_optimizer(cfg: dict, model: torch.nn.Module):
 def main():
     args = parse_args()
     cfg = load_config(args.config)
+    print("Loaded config:", args.config)
+    print("Experiment:", cfg["experiment"]["name"])
+    print("Batch size:", cfg["train"]["batch_size"])
+    print("Gradient accumulation:", cfg["train"].get("gradient_accumulation_steps", 1))
+    print("Latent channels:", cfg["model"]["latent_channels"])
+    print("Base channels:", cfg["model"]["base_channels"])
+    print("Channel multipliers:", cfg["model"]["channel_multipliers"])
+    print("Num res blocks:", cfg["model"]["num_res_blocks"])
+    print("Attention heads:", cfg["model"]["attention_heads"])
 
     if args.resume_from is not None:
         cfg["train"]["resume_from"] = args.resume_from
