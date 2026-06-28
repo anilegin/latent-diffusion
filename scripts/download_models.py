@@ -10,6 +10,20 @@ def print_header(title: str) -> None:
     print("=" * 80)
 
 
+def print_model_list() -> None:
+    print_header("Models cached by this script")
+
+    models = [
+        ("1. VGG16", "LPIPS backbone"),
+        ("2. LPIPS VGG", "perceptual metric weights"),
+        ("3. InceptionV3", "rFID/FID feature extractor"),
+        ("4. CLIP ViT-B/32", "text encoder for LDM"),
+    ]
+
+    for name, comment in models:
+        print(f"{name:18s} # {comment}")
+
+
 def download_torchvision_vgg16() -> None:
     """
     Required by LPIPS when using lpips_net='vgg'.
@@ -17,7 +31,7 @@ def download_torchvision_vgg16() -> None:
     This downloads:
         ~/.cache/torch/hub/checkpoints/vgg16-397923af.pth
     """
-    print_header("Downloading torchvision VGG16 weights")
+    print_header("1. VGG16")
 
     import torch
     from torchvision.models import vgg16, VGG16_Weights
@@ -33,11 +47,10 @@ def download_lpips_weights() -> None:
     """
     Required by lpips.LPIPS(net='vgg').
 
-    LPIPS itself has small learned linear calibration weights.
-    Depending on the package version, these may already be inside site-packages,
-    but instantiating LPIPS here verifies everything is available.
+    LPIPS has small learned calibration weights.
+    Instantiating it verifies the weights are available.
     """
-    print_header("Initializing LPIPS VGG model")
+    print_header("2. LPIPS VGG")
 
     import lpips
 
@@ -47,11 +60,34 @@ def download_lpips_weights() -> None:
     print("LPIPS VGG initialized successfully.")
 
 
+def download_torchvision_inception_v3() -> None:
+    """
+    Required by evaluate_vae_reconstruction.py when rFID/FID is enabled.
+
+    This downloads:
+        ~/.cache/torch/hub/checkpoints/inception_v3_google-*.pth
+    """
+    print_header("3. InceptionV3")
+
+    import torch
+    from torchvision.models import inception_v3, Inception_V3_Weights
+
+    model = inception_v3(
+        weights=Inception_V3_Weights.IMAGENET1K_V1,
+        transform_input=False,
+        aux_logits=True,
+    )
+    model.eval()
+
+    print("InceptionV3 downloaded/loaded successfully.")
+    print("Torch cache:", torch.hub.get_dir())
+
+
 def download_clip() -> None:
     """
-    This downloads Hugging Face CLIP tokenizer + text encoder.
+    Required later for text-conditioned LDM training.
     """
-    print_header("Downloading CLIP text encoder for later LDM training")
+    print_header("4. CLIP ViT-B/32")
 
     from transformers import CLIPTextModel, CLIPTokenizer
 
@@ -69,7 +105,7 @@ def verify_offline_lpips() -> None:
     Test LPIPS under offline-ish environment.
     This should not attempt network if caches are ready.
     """
-    print_header("Verifying LPIPS works")
+    print_header("Verifying LPIPS")
 
     import torch
     import lpips
@@ -85,15 +121,59 @@ def verify_offline_lpips() -> None:
     print("LPIPS forward OK. Value:", float(value.mean()))
 
 
+def verify_offline_inception_v3() -> None:
+    """
+    Test InceptionV3 under offline-ish environment.
+    This should not attempt network if caches are ready.
+    """
+    print_header("Verifying InceptionV3")
+
+    import torch
+    import torch.nn.functional as F
+    from torchvision.models import inception_v3, Inception_V3_Weights
+
+    model = inception_v3(
+        weights=Inception_V3_Weights.IMAGENET1K_V1,
+        transform_input=False,
+        aux_logits=True,
+    )
+    model.fc = torch.nn.Identity()
+    model.eval()
+
+    x = torch.randn(1, 3, 256, 256)
+    x = F.interpolate(
+        x,
+        size=(299, 299),
+        mode="bilinear",
+        align_corners=False,
+    )
+
+    with torch.no_grad():
+        out = model(x)
+
+    if isinstance(out, tuple):
+        out = out[0]
+
+    print("InceptionV3 forward OK.")
+    print("Feature shape:", tuple(out.shape))
+
+
 def verify_clip_offline() -> None:
-    print_header("Verifying CLIP works")
+    print_header("Verifying CLIP")
 
     from transformers import CLIPTextModel, CLIPTokenizer
 
     model_id = "openai/clip-vit-base-patch32"
 
-    tokenizer = CLIPTokenizer.from_pretrained(model_id, local_files_only=True)
-    text_encoder = CLIPTextModel.from_pretrained(model_id, local_files_only=True)
+    tokenizer = CLIPTokenizer.from_pretrained(
+        model_id,
+        local_files_only=True,
+    )
+
+    text_encoder = CLIPTextModel.from_pretrained(
+        model_id,
+        local_files_only=True,
+    )
 
     batch = tokenizer(
         ["a dog sitting on a bench"],
@@ -117,12 +197,15 @@ def main() -> None:
     print("HF_HOME:", os.environ.get("HF_HOME", "not set"))
     print("TRANSFORMERS_CACHE:", os.environ.get("TRANSFORMERS_CACHE", "not set"))
 
+    print_model_list()
+
     download_torchvision_vgg16()
     download_lpips_weights()
-    verify_offline_lpips()
-
-    # Needed later for text-conditioned LDM.
+    download_torchvision_inception_v3()
     download_clip()
+
+    verify_offline_lpips()
+    verify_offline_inception_v3()
     verify_clip_offline()
 
     print_header("All required models are cached successfully")
