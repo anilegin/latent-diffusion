@@ -91,7 +91,8 @@ def download_clip() -> None:
 
     from transformers import CLIPTextModel, CLIPTokenizer
 
-    model_id = "openai/clip-vit-base-patch32"
+    # model_id = "openai/clip-vit-base-patch32"
+    model_id = "openai/clip-vit-large-patch14"
 
     tokenizer = CLIPTokenizer.from_pretrained(model_id)
     text_encoder = CLIPTextModel.from_pretrained(model_id)
@@ -163,7 +164,8 @@ def verify_clip_offline() -> None:
 
     from transformers import CLIPTextModel, CLIPTokenizer
 
-    model_id = "openai/clip-vit-base-patch32"
+    # model_id = "openai/clip-vit-base-patch32"
+    model_id = "openai/clip-vit-large-patch14"
 
     tokenizer = CLIPTokenizer.from_pretrained(
         model_id,
