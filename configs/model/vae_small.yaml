@@ -15,6 +15,6 @@ model:
   attention_heads: 4
 
   # Later after training the VAE, we can compute latent std and update this.
-  scaling_factor: 1.0
+  scaling_factor: 1.032
 
 attention_resolutions: [32]
