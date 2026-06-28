@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import torch
 import torch.nn.functional as F
 
+from src.losses.diffusion_loss import DiffusionLoss
 from src.diffusion.noise_schedule import NoiseSchedule, create_noise_schedule, extract
 from src.diffusion.prediction import (
     get_training_target,
@@ -60,6 +61,9 @@ class GaussianDiffusion:
 
         self.schedule = schedule
         self.prediction_type = prediction_type.lower()
+        self.diffusion_loss = DiffusionLoss(
+            prediction_type=self.prediction_type
+        )
         self.loss_type = loss_type.lower()
 
         if self.prediction_type not in {"v", "v_prediction", "eps", "epsilon", "x0", "sample"}:
@@ -170,25 +174,6 @@ class GaussianDiffusion:
             prediction_type=self.prediction_type,
         )
 
-    def loss(
-        self,
-        model_output: torch.Tensor,
-        target: torch.Tensor,
-    ) -> torch.Tensor:
-        """
-        Basic denoising loss.
-        """
-        if self.loss_type == "mse":
-            return F.mse_loss(model_output, target)
-
-        if self.loss_type == "l1":
-            return F.l1_loss(model_output, target)
-
-        if self.loss_type == "huber":
-            return F.smooth_l1_loss(model_output, target)
-
-        raise RuntimeError("Invalid loss type.")
-
     def p_losses(
         self,
         model,
@@ -199,20 +184,7 @@ class GaussianDiffusion:
         model_kwargs: dict | None = None,
     ) -> DiffusionTrainingOutput:
         """
-        Complete training step math.
-
-        This does:
-
-            1. sample timestep t
-            2. sample noise eps
-            3. create z_t
-            4. get v target
-            5. run model
-            6. compute loss
-
-        Expected model signature:
-
-            model_output = model(z_t, t, context=context)
+        Full diffusion training step using  loss module.
         """
         if model_kwargs is None:
             model_kwargs = {}
@@ -221,10 +193,7 @@ class GaussianDiffusion:
         device = z_0.device
 
         if t is None:
-            t = self.sample_timesteps(
-                batch_size=batch_size,
-                device=device,
-            )
+            t = self.sample_timesteps(batch_size, device)
 
         z_t, noise = self.q_sample(
             z_0=z_0,
@@ -232,36 +201,36 @@ class GaussianDiffusion:
             noise=noise,
         )
 
-        target = self.training_target(
-            z_0=z_0,
-            noise=noise,
-            t=t,
+        if context is None:
+            model_output = model(z_t, t, **model_kwargs)
+        else:
+            model_output = model(z_t, t, context=context, **model_kwargs)
+
+        alpha_t = extract(
+            self.schedule.sqrt_alphas_cumprod,
+            t,
+            z_0.shape,
         )
 
-        if context is None:
-            model_output = model(
-                z_t,
-                t,
-                **model_kwargs,
-            )
-        else:
-            model_output = model(
-                z_t,
-                t,
-                context=context,
-                **model_kwargs,
-            )
+        sigma_t = extract(
+            self.schedule.sqrt_one_minus_alphas_cumprod,
+            t,
+            z_0.shape,
+        )
 
-        simple_loss = self.loss(
+        loss = self.diffusion_loss(
             model_output=model_output,
-            target=target,
+            x0=z_0,
+            noise=noise,
+            alpha_t=alpha_t,
+            sigma_t=sigma_t,
         )
 
         return DiffusionTrainingOutput(
-            loss=simple_loss,
-            simple_loss=simple_loss.detach(),
+            loss=loss,
+            simple_loss=loss.detach(),
             model_output=model_output,
-            target=target,
+            target=None,  
             z_t=z_t,
             noise=noise,
             timesteps=t,
