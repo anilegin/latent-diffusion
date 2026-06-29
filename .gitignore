@@ -12,3 +12,4 @@ ldm_env/
 logs/
 outputs/
 upload_model_to_HF.py
+upload_best_pt_to_HF.py
