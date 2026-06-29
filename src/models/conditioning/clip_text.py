@@ -48,6 +48,8 @@ class FrozenCLIPTextEncoder(nn.Module):
         max_length: int = 77,
         freeze: bool = True,
         use_last_hidden_state: bool = True,
+        cache_dir: str | None = None,
+        local_files_only: bool = False,
     ):
         super().__init__()
 
@@ -55,9 +57,20 @@ class FrozenCLIPTextEncoder(nn.Module):
         self.max_length = max_length
         self.freeze = freeze
         self.use_last_hidden_state = use_last_hidden_state
+        self.cache_dir = cache_dir
+        self.local_files_only = local_files_only
 
-        self.tokenizer = CLIPTokenizer.from_pretrained(model_name)
-        self.text_model = CLIPTextModel.from_pretrained(model_name)
+        self.tokenizer = CLIPTokenizer.from_pretrained(
+            model_name,
+            cache_dir=cache_dir,
+            local_files_only=local_files_only,
+        )
+
+        self.text_model = CLIPTextModel.from_pretrained(
+            model_name,
+            cache_dir=cache_dir,
+            local_files_only=local_files_only,
+        )
 
         if self.freeze:
             self.text_model.eval()
