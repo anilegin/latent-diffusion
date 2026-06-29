@@ -11,3 +11,4 @@ ldm_env/
 #outputs/
 logs/
 outputs/
+upload_model_to_HF.py
