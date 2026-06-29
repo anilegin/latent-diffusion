@@ -16,13 +16,13 @@ class DDPMSamplerOutput:
 
 class DDPMSampler:
     """
-    DDPM ancestral sampler.
+    DDPM sampler.
 
     This sampler uses the learned reverse process:
 
         z_T ~ N(0, I)
         z_T -> z_{T-1} -> ... -> z_0
-        
+
     Supports classifier-free guidance if both conditional and unconditional
     context are provided.
     """
