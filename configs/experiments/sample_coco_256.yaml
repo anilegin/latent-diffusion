@@ -1,0 +1,51 @@
+defaults:
+  - ../paths.yaml
+  - ../model/ldm_unet_light.yaml
+
+experiment:
+  name: sample_ldm_coco_256
+
+vae:
+  config: outputs/vae/vae_coco_256_small/config_used_2026-06-25_03-52-55.yaml
+  checkpoint: outputs/vae/vae_coco_256_small/checkpoints/best.pt
+
+ldm:
+  checkpoint: outputs/ldm/ldm_coco_256_vae8_light_vpred/checkpoints/best.pt
+
+text_encoder:
+  model_name: openai/clip-vit-large-patch14
+  max_length: 77
+  freeze: true
+  use_last_hidden_state: true
+
+conditioning:
+  empty_text: ""
+
+diffusion:
+  schedule_type: cosine
+  num_timesteps: 1000
+  prediction_type: v
+  loss_type: mse
+  beta_start: 0.0001
+  beta_end: 0.02
+  cosine_s: 0.008
+  max_beta: 0.999
+
+sampler:
+  type: ddim         # ddim or ddpm
+  num_steps: 50
+  eta: 0.0
+  guidance_scale: 5.0
+  clip_denoised: false
+
+generation:
+  seed: 42
+  precision: bf16
+  output_dir: outputs/samples/ldm_text2image
+  num_images_per_prompt: 1
+  batch_size: 4
+
+prompts:
+  - "a dog running through grass"
+  - "a red bus driving in a city street"
+  - "a plate of food on a wooden table"
