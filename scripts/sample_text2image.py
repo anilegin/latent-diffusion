@@ -143,11 +143,13 @@ def build_conditioner(cfg: dict) -> ClassifierFreeGuidanceConditioner:
         max_length=int(text_cfg.get("max_length", 77)),
         freeze=bool(text_cfg.get("freeze", True)),
         use_last_hidden_state=bool(text_cfg.get("use_last_hidden_state", True)),
+        cache_dir=text_cfg.get("cache_dir", None),
+        local_files_only=bool(text_cfg.get("local_files_only", False)),
     )
 
     conditioner = ClassifierFreeGuidanceConditioner(
         text_encoder=text_encoder,
-        cond_drop_prob=0.0,  # no training-time dropout in inference
+        cond_drop_prob=0.0,
         empty_text=str(cond_cfg.get("empty_text", "")),
     )
 

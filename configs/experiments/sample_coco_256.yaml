@@ -18,6 +18,9 @@ text_encoder:
   freeze: true
   use_last_hidden_state: true
 
+  cache_dir: /leonardo_scratch/large/userexternal/aegin000/hf_cache
+  local_files_only: true
+
 conditioning:
   empty_text: ""
 

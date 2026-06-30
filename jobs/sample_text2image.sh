@@ -35,6 +35,11 @@ source "$VENV_DIR/bin/activate"
 export PYTHONUNBUFFERED=1
 export TOKENIZERS_PARALLELISM=false
 
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export TOKENIZERS_PARALLELISM=false
+
 # Useful for CUDA memory fragmentation issues.
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
