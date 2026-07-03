@@ -1,0 +1,37 @@
+model:
+  name: latent_diffusion_unet_strong
+
+  in_channels: 8
+  out_channels: 8
+  latent_size: 32
+
+  #base_chahnnels: 256 
+  base_channels: 304
+
+  # Channel path:
+  # 32x32: 256
+  # 16x16: 512
+  # 8x8:   1024
+  channel_multipliers: [1, 2, 4]
+
+  num_res_blocks: 3
+
+  dropout: 0.0
+
+  # still no attention at 32x32 to control memory
+  attention_resolutions: [16, 8]
+
+  use_middle_attention: true
+
+  # CLIP ViT-L/14 text hidden size.
+  context_dim: 768
+
+  # Attention inner dimension:
+  # 8 * 64 = 512
+  num_heads: 8
+  head_dim: 64
+
+  transformer_depth: 1
+
+  # null means base_channels * 4 = 1024.
+  time_embedding_dim: null

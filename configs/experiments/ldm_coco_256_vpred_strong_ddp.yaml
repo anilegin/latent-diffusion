@@ -1,0 +1,75 @@
+defaults:
+  - ../paths.yaml
+  - ../model/ldm_unet_strong.yaml
+
+experiment:
+  name: ldm_coco_256_vae8_strong_vpred_ddp
+
+data:
+  train_latent_dir: outputs/latents/coco_train2017_vae8_scaled_allcaptions
+  val_latent_dir: outputs/latents/coco_val2017_vae8_scaled_allcaptions
+
+  train_caption_mode: random
+  val_caption_mode: first
+
+  # With multiple processes, false is safer.
+  # true means each process loads all latents into CPU RAM.
+  load_latents_to_memory: false
+
+text_encoder:
+  model_name: openai/clip-vit-large-patch14
+  max_length: 77
+  freeze: true
+  use_last_hidden_state: true
+
+conditioning:
+  cond_drop_prob: 0.1
+  empty_text: ""
+
+diffusion:
+  schedule_type: cosine
+  num_timesteps: 1000
+  prediction_type: v
+  loss_type: mse
+
+  beta_start: 0.0001
+  beta_end: 0.02
+  cosine_s: 0.008
+  max_beta: 0.999
+
+train:
+  seed: 42
+  precision: bf16
+
+  # This is per GPU.
+  # Effective batch = batch_size * gradient_accumulation_steps * num_gpus.
+  batch_size: 2
+  gradient_accumulation_steps: 12
+
+  num_workers: 8
+  pin_memory: true
+
+  max_epochs: 100
+
+  # Larger model, safer LR.
+  lr: 0.00006
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+
+  grad_clip: 1.0
+
+  log_every: 50
+  validate_every: 1
+  save_every: 1
+
+  output_dir_key: outputs.ldm_dir
+
+  resume_from: null
+  finetune_from: null
+
+optimizer:
+  name: adamw
+
+distributed:
+  enabled: true
+  backend: nccl

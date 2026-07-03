@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=diffusion-coco256-sample-text2image
+#SBATCH --job-name=diffusion-coco256-sample-text2image-3
 #SBATCH --account=iscrc_mnlp26
 #SBATCH --partition=boost_usr_prod
 #SBATCH --nodes=1
@@ -66,8 +66,8 @@ echo "============================================="
 echo "Generating Images..."
 echo "============================================="
 
-python scripts/sample_text2image.py \
-  --config configs/experiments/sample_coco_256.yaml
+# python scripts/sample_text2image.py \
+#   --config configs/experiments/sample_coco_256.yaml
 
 # python scripts/sample_text2image.py \
 #   --config configs/experiments/sample_coco_256.yaml \
@@ -81,7 +81,27 @@ python scripts/sample_text2image.py \
 #   --config configs/experiments/sample_coco_256.yaml \
 #   --prompt "a red sports car on a mountain road" \
 #   --guidance-scale 7.5 \
-#   --num-steps 50
+#   --num-steps 50 \
+#   --sampler ddim
+
+# python scripts/sample_text2image.py \
+#   --config configs/experiments/sample_coco_256.yaml \
+#   --prompt "a blue sports car on a mountain road" \
+#   --guidance-scale 7.5 \
+#   --sampler ddpm
+
+python scripts/sample_text2image.py \
+  --config configs/experiments/sample_coco_256_medium.yaml \
+  --prompt "a red sports car on a mountain road" \
+  --guidance-scale 7.5 \
+  --num-steps 150 \
+  --sampler ddim
+
+python scripts/sample_text2image.py \
+  --config configs/experiments/sample_coco_256_medium.yaml \
+  --prompt "a blue sports car on a mountain road" \
+  --guidance-scale 7.5 \
+  --sampler ddpm
 
 echo "============================================="
 echo "Generating Finished finished: $(date)"

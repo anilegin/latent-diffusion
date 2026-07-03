@@ -94,6 +94,13 @@ def parse_args():
         help="Override images per prompt.",
     )
 
+    parser.add_argument(
+        "--sampler",
+        type=str,
+        default='ddim',
+        help="Sampler DDIM or DDPM",
+    )
+
     return parser.parse_args()
 
 
@@ -320,7 +327,11 @@ def main():
     num_images_per_prompt = int(cfg["generation"].get("num_images_per_prompt", 1))
     batch_size = int(cfg["generation"].get("batch_size", 4))
 
-    sampler_type = str(cfg["sampler"].get("type", "ddim")).lower()
+    if args.sampler is not None:
+        sampler_type = args.sampler.lower()
+    else:
+        sampler_type = str(cfg["sampler"].get("type", "ddim")).lower()
+
     num_steps = int(cfg["sampler"].get("num_steps", 50))
     eta = float(cfg["sampler"].get("eta", 0.0))
     guidance_scale = float(cfg["sampler"].get("guidance_scale", 5.0))
