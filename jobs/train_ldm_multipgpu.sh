@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ldm-strong-multigpu
+#SBATCH --job-name=ldm-coco256_strong
 #SBATCH --account=iscrc_mnlp26
 #SBATCH --partition=boost_usr_prod
 #SBATCH --nodes=1
@@ -34,6 +34,12 @@ export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 
+export TORCH_DISTRIBUTED_DEBUG=DETAIL
+export NCCL_DEBUG=INFO
+export NCCL_ASYNC_ERROR_HANDLING=1
+export PYTHONFAULTHANDLER=1
+export CUDA_LAUNCH_BLOCKING=0
+
 echo "============================================="
 echo "Job ID: ${SLURM_JOB_ID:-not-set}"
 echo "Node: $(hostname)"
@@ -54,10 +60,22 @@ for i in range(torch.cuda.device_count()):
 print("bf16 supported:", torch.cuda.is_bf16_supported())
 PY
 
+# torchrun \
+#   --standalone \
+#   --nnodes=1 \
+#   --nproc_per_node=3 \
+#   scripts/train_ldm_multigpu.py \
+#   --config "$CONFIG_PATH"
+
+mkdir -p logs/torchrun_${SLURM_JOB_ID}
+
 torchrun \
   --standalone \
   --nnodes=1 \
   --nproc_per_node=3 \
+  --log_dir logs/torchrun_${SLURM_JOB_ID} \
+  --redirects 3 \
+  --tee 3 \
   scripts/train_ldm_multigpu.py \
   --config "$CONFIG_PATH"
 

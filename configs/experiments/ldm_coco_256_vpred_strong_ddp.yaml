@@ -12,9 +12,11 @@ data:
   train_caption_mode: random
   val_caption_mode: first
 
-  # With multiple processes, false is safer.
   # true means each process loads all latents into CPU RAM.
-  load_latents_to_memory: false
+  # true is safer here because each process loads all latent shards once.
+  # This avoids repeatedly loading random shard files during shuffled training.
+  # CPU RAM cost is acceptable with 240GB.
+  load_latents_to_memory: true
 
 text_encoder:
   model_name: openai/clip-vit-large-patch14
@@ -46,7 +48,7 @@ train:
   batch_size: 2
   gradient_accumulation_steps: 12
 
-  num_workers: 8
+  num_workers: 2
   pin_memory: true
 
   max_epochs: 100

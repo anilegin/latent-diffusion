@@ -7,6 +7,7 @@ import random
 import sys
 from pathlib import Path
 from typing import Any
+from contextlib import nullcontext
 
 import numpy as np
 import torch
@@ -14,6 +15,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 from tqdm import tqdm
+from torch.distributed.elastic.multiprocessing.errors import record
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
@@ -104,7 +106,6 @@ def setup_distributed():
 
 def cleanup_distributed():
     if is_dist_available_and_initialized():
-        dist.barrier()
         dist.destroy_process_group()
 
 
@@ -472,10 +473,20 @@ def train_one_epoch(
             or (batch_idx + 1) == len(train_loader)
         )
 
-        if scaler.is_enabled():
-            scaler.scale(loss_for_backward).backward()
+        sync_context = (
+            model.no_sync()
+            if hasattr(model, "no_sync") and not should_step
+            else nullcontext()
+        )
 
-            if should_step:
+        with sync_context:
+            if scaler.is_enabled():
+                scaler.scale(loss_for_backward).backward()
+            else:
+                loss_for_backward.backward()
+
+        if should_step:
+            if scaler.is_enabled():
                 if grad_clip is not None:
                     scaler.unscale_(optimizer)
                     torch.nn.utils.clip_grad_norm_(
@@ -485,13 +496,8 @@ def train_one_epoch(
 
                 scaler.step(optimizer)
                 scaler.update()
-                optimizer.zero_grad(set_to_none=True)
-                global_step += 1
 
-        else:
-            loss_for_backward.backward()
-
-            if should_step:
+            else:
                 if grad_clip is not None:
                     torch.nn.utils.clip_grad_norm_(
                         unwrap_model(model).parameters(),
@@ -499,8 +505,9 @@ def train_one_epoch(
                     )
 
                 optimizer.step()
-                optimizer.zero_grad(set_to_none=True)
-                global_step += 1
+
+            optimizer.zero_grad(set_to_none=True)
+            global_step += 1
 
         reduced_loss = reduce_mean(loss.detach())
         loss_sum += float(reduced_loss.cpu())
@@ -578,7 +585,7 @@ def validate(
         "loss": loss_sum / max(1, num_batches),
     }
 
-
+@record
 def main():
     args = parse_args()
 
