@@ -1,7 +1,7 @@
 # Latent Diffusion
 
 **Model checkpoints:**  
-- VAE: `https://huggingface.co/anilegin/lightweight-diffusion-vae`  
+- VAE: [https://huggingface.co/anilegin/lightweight-diffusion-vae](https://huggingface.co/anilegin/lightweight-diffusion-vae)  
 - Latent Diffusion Model: `-`
 
 This repository implements a custom latent diffusion text-to-image pipeline trained on COCO 2017 captions. It includes a custom VAE, a CLIP-conditioned latent diffusion U-Net, multi-GPU training and DDIM/DDPM sampling.
@@ -100,12 +100,10 @@ Evaluation was performed on the same subset setting: 5,000 COCO images at 256×2
 | Model | rFID ↓ | PSNR ↑ | SSIM ↑ | LPIPS / PSIM ↓ | Notes |
 |---|---:|---:|---:|---:|---|
 | Custom COCO VAE | 8.91 | 30.1 ± 3.5 | 0.88 ± 0.07 | LPIPS 0.13 ± 0.04 | Trained from scratch for this project; 8 latent channels |
-| SD VAE original | 4.99 | 23.4 ± 3.8 | 0.69 ± 0.14 | PSIM 1.01 ± 0.28 | Original KL-f4 VAE used in Stable Diffusion |
+| SD VAE original | 4.99 | 23.4 ± 3.8 | 0.69 ± 0.14 | PSIM 1.01 ± 0.28 | Original KL-f4 VAE used in Stable Diffusion 2 |
 
 Reference for the Stable Diffusion VAE:  
 `https://huggingface.co/stabilityai/sd-vae-ft-mse-original`
-
-The custom VAE reconstructs images with much higher PSNR and SSIM on this setup, while the SD VAE original has better rFID.
 
 ---
 
@@ -168,8 +166,8 @@ configs/
 ├── model/
 │   ├── vae_small.yaml
 │   ├── ldm_unet_light.yaml
-│   ├── ldm_unet_strong.yaml
-│   └── ldm_unet_xl_480m.yaml
+│   ├── ldm_unet_medium.yaml
+│   └── ldm_unet_strong.yaml
 └── experiments/
     ├── vae_coco_256.yaml
     ├── ldm_coco_256_vpred.yaml
