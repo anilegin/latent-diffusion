@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import random
 import sys
@@ -270,6 +271,47 @@ def build_optimizer(cfg: dict, model: torch.nn.Module):
     raise ValueError(f"Unknown optimizer: {name}")
 
 
+def build_lr_scheduler(
+    cfg: dict,
+    optimizer: torch.optim.Optimizer,
+    steps_per_epoch: int,
+):
+    scheduler_name = str(cfg["train"].get("scheduler", "constant")).lower()
+    warmup_steps = int(cfg["train"].get("warmup_steps", 0))
+    min_lr = float(cfg["train"].get("min_lr", 0.0))
+    base_lr = float(cfg["train"]["lr"])
+    max_epochs = int(cfg["train"]["max_epochs"])
+
+    total_steps = int(cfg["train"].get("max_train_steps", 0))
+    if total_steps <= 0:
+        total_steps = max(1, steps_per_epoch * max_epochs)
+
+    if scheduler_name in {"none", "constant"} and warmup_steps <= 0:
+        return None
+
+    min_factor = min_lr / base_lr if base_lr > 0 else 0.0
+
+    def lr_lambda(step: int) -> float:
+        if warmup_steps > 0 and step < warmup_steps:
+            return float(step + 1) / float(max(1, warmup_steps))
+
+        if scheduler_name == "cosine":
+            progress = float(step - warmup_steps) / float(max(1, total_steps - warmup_steps))
+            progress = min(max(progress, 0.0), 1.0)
+            cosine_factor = 0.5 * (1.0 + math.cos(math.pi * progress))
+            return min_factor + (1.0 - min_factor) * cosine_factor
+
+        if scheduler_name in {"none", "constant"}:
+            return 1.0
+
+        raise ValueError(f"Unknown scheduler: {scheduler_name}")
+
+    return torch.optim.lr_scheduler.LambdaLR(
+        optimizer,
+        lr_lambda=lr_lambda,
+    )
+
+
 def autocast_context(device: torch.device, precision: str):
     if device.type != "cuda":
         return torch.autocast(device_type="cpu", enabled=False)
@@ -300,6 +342,7 @@ def save_checkpoint(
     model,
     conditioner,
     optimizer,
+    scheduler,
     scaler,
     epoch: int,
     global_step: int,
@@ -315,6 +358,7 @@ def save_checkpoint(
         "model": unwrap_model(model).state_dict(),
         "conditioner": conditioner.state_dict(),
         "optimizer": optimizer.state_dict(),
+        "scheduler": scheduler.state_dict() if scheduler is not None else None,
         "scaler": scaler.state_dict() if scaler is not None else None,
         "best_val_loss": best_val_loss,
         "metrics": metrics,
@@ -343,6 +387,7 @@ def load_resume_checkpoint(
     model,
     conditioner,
     optimizer,
+    scheduler,
     scaler,
     device: torch.device,
 ):
@@ -364,6 +409,9 @@ def load_resume_checkpoint(
 
     optimizer.load_state_dict(checkpoint["optimizer"])
     optimizer_to_device(optimizer, device)
+
+    if scheduler is not None and checkpoint.get("scheduler") is not None:
+        scheduler.load_state_dict(checkpoint["scheduler"])
 
     if scaler is not None and checkpoint.get("scaler") is not None:
         scaler.load_state_dict(checkpoint["scaler"])
@@ -414,6 +462,7 @@ def train_one_epoch(
     train_loader,
     train_sampler,
     optimizer,
+    scheduler,
     scaler,
     device: torch.device,
     precision: str,
@@ -433,12 +482,18 @@ def train_one_epoch(
     num_batches = 0
 
     iterator = train_loader
+    use_tqdm = (
+        is_main_process()
+        and os.environ.get("DISABLE_TQDM", "0") != "1"
+    )
 
-    if is_main_process():
+    if use_tqdm:
         iterator = tqdm(
             train_loader,
             desc=f"Train epoch {epoch}",
             leave=False,
+            mininterval=10.0,
+            dynamic_ncols=False,
         )
 
     for batch_idx, batch in enumerate(iterator):
@@ -506,6 +561,9 @@ def train_one_epoch(
 
                 optimizer.step()
 
+            if scheduler is not None:
+                scheduler.step()
+
             optimizer.zero_grad(set_to_none=True)
             global_step += 1
 
@@ -513,12 +571,20 @@ def train_one_epoch(
         loss_sum += float(reduced_loss.cpu())
         num_batches += 1
 
-        if is_main_process() and batch_idx % log_every == 0:
+        if use_tqdm and batch_idx % log_every == 0:
             iterator.set_postfix(
                 {
                     "loss": loss_sum / max(1, num_batches),
                     "step": global_step,
                 }
+            )
+        elif is_main_process() and batch_idx % log_every == 0:
+            current_lr = optimizer.param_groups[0]["lr"]
+            print(
+                f"epoch={epoch} batch={batch_idx}/{len(train_loader)} "
+                f"loss={loss_sum / max(1, num_batches):.6f} "
+                f"step={global_step} lr={current_lr:.8f}",
+                flush=True,
             )
 
     return {
@@ -535,6 +601,7 @@ def validate(
     val_loader,
     device: torch.device,
     precision: str,
+    max_batches: int | None = None,
 ):
     model.eval()
     conditioner.eval()
@@ -543,15 +610,24 @@ def validate(
     num_batches = 0
 
     iterator = val_loader
+    use_tqdm = (
+        is_main_process()
+        and os.environ.get("DISABLE_TQDM", "0") != "1"
+    )
 
-    if is_main_process():
+    if use_tqdm:
         iterator = tqdm(
             val_loader,
             desc=f"Val epoch {epoch}",
             leave=False,
+            mininterval=10.0,
+            dynamic_ncols=False,
         )
 
-    for batch in iterator:
+    for batch_idx, batch in enumerate(iterator):
+        if max_batches is not None and batch_idx >= max_batches:
+            break
+
         z0 = batch["latent"].to(
             device,
             non_blocking=True,
@@ -584,6 +660,83 @@ def validate(
     return {
         "loss": loss_sum / max(1, num_batches),
     }
+
+@torch.no_grad()
+def validate_timestep_buckets(
+    epoch: int,
+    model,
+    conditioner,
+    diffusion,
+    val_loader,
+    device: torch.device,
+    precision: str,
+    timestep_buckets: list[list[int]] | None = None,
+    max_batches: int | None = None,
+):
+    if not timestep_buckets:
+        return {}
+
+    model.eval()
+    conditioner.eval()
+
+    metrics: dict[str, float] = {}
+
+    for bucket in timestep_buckets:
+        low = int(bucket[0])
+        high = int(bucket[1])
+
+        loss_sum = 0.0
+        num_batches = 0
+
+        iterator = val_loader
+
+        for batch_idx, batch in enumerate(iterator):
+            if max_batches is not None and batch_idx >= max_batches:
+                break
+
+            z0 = batch["latent"].to(
+                device,
+                non_blocking=True,
+            )
+
+            captions = batch["caption"]
+
+            t = torch.randint(
+                low=low,
+                high=high,
+                size=(z0.shape[0],),
+                device=device,
+                dtype=torch.long,
+            )
+
+            with autocast_context(device, precision):
+                cond = conditioner(
+                    captions,
+                    device=device,
+                    apply_dropout=False,
+                )
+
+                out = diffusion.p_losses(
+                    model=model,
+                    z_0=z0,
+                    context=cond["context"],
+                    t=t,
+                    model_kwargs={
+                        "attention_mask": cond["attention_mask"],
+                    },
+                )
+
+                loss = out.loss
+
+            reduced_loss = reduce_mean(loss.detach())
+            loss_sum += float(reduced_loss.cpu())
+            num_batches += 1
+
+        key = f"loss_t_{low:03d}_{high:03d}"
+        metrics[key] = loss_sum / max(1, num_batches)
+
+    return metrics
+
 
 @record
 def main():
@@ -649,6 +802,14 @@ def main():
             enabled=(precision == "fp16" and device.type == "cuda")
         )
 
+        gradient_accumulation_steps = int(cfg["train"].get("gradient_accumulation_steps", 1))
+        steps_per_epoch = math.ceil(len(train_loader) / gradient_accumulation_steps)
+        scheduler = build_lr_scheduler(
+            cfg=cfg,
+            optimizer=optimizer,
+            steps_per_epoch=steps_per_epoch,
+        )
+
         if finetune_from is not None:
             load_finetune_checkpoint(
                 checkpoint_path=finetune_from,
@@ -674,6 +835,7 @@ def main():
                 model=model,
                 conditioner=conditioner,
                 optimizer=optimizer,
+                scheduler=scheduler,
                 scaler=scaler,
                 device=device,
             )
@@ -699,10 +861,15 @@ def main():
             print("Per-GPU batch size:", cfg["train"]["batch_size"])
             print("Grad accumulation:", cfg["train"].get("gradient_accumulation_steps", 1))
             print("Effective batch:", int(cfg["train"]["batch_size"]) * int(cfg["train"].get("gradient_accumulation_steps", 1)) * world_size)
+            print("Scheduler:", cfg["train"].get("scheduler", "constant"))
+            print("Warmup steps:", cfg["train"].get("warmup_steps", 0))
+            print("Min LR:", cfg["train"].get("min_lr", 0.0))
+            print("Steps per epoch:", steps_per_epoch)
             print("=============================================")
 
         max_epochs = int(cfg["train"]["max_epochs"])
         validate_every = int(cfg["train"].get("validate_every", 1))
+        validation_enabled = bool(cfg.get("validation", {}).get("enabled", True))
         save_every = int(cfg["train"].get("save_every", 1))
         grad_clip = cfg["train"].get("grad_clip", 1.0)
         if grad_clip is not None:
@@ -720,6 +887,7 @@ def main():
                 train_loader=train_loader,
                 train_sampler=train_sampler,
                 optimizer=optimizer,
+                scheduler=scheduler,
                 scaler=scaler,
                 device=device,
                 precision=precision,
@@ -736,7 +904,7 @@ def main():
                 **{f"train_{k}": v for k, v in train_metrics.items()},
             }
 
-            if (epoch + 1) % validate_every == 0:
+            if validation_enabled and (epoch + 1) % validate_every == 0:
                 val_metrics = validate(
                     epoch=epoch,
                     model=model,
@@ -745,9 +913,24 @@ def main():
                     val_loader=val_loader,
                     device=device,
                     precision=precision,
+                    max_batches=cfg.get("validation", {}).get("max_batches", None),
                 )
 
                 metrics.update({f"val_{k}": v for k, v in val_metrics.items()})
+
+                bucket_metrics = validate_timestep_buckets(
+                    epoch=epoch,
+                    model=model,
+                    conditioner=conditioner,
+                    diffusion=diffusion,
+                    val_loader=val_loader,
+                    device=device,
+                    precision=precision,
+                    timestep_buckets=cfg.get("validation", {}).get("timestep_buckets", None),
+                    max_batches=cfg.get("validation", {}).get("bucket_max_batches", cfg.get("validation", {}).get("max_batches", None)),
+                )
+
+                metrics.update({f"val_{k}": v for k, v in bucket_metrics.items()})
 
                 val_loss = val_metrics["loss"]
 
@@ -761,6 +944,7 @@ def main():
                             model=model,
                             conditioner=conditioner,
                             optimizer=optimizer,
+                            scheduler=scheduler,
                             scaler=scaler,
                             epoch=epoch,
                             global_step=global_step,
@@ -778,6 +962,7 @@ def main():
                         model=model,
                         conditioner=conditioner,
                         optimizer=optimizer,
+                        scheduler=scheduler,
                         scaler=scaler,
                         epoch=epoch,
                         global_step=global_step,
