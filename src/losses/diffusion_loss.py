@@ -30,19 +30,166 @@ class DiffusionLoss(nn.Module):
     def __init__(
         self,
         prediction_type: str = "v",  # "epsilon" or "v"
+        loss_type: str = "mse",
+        snr_gamma: float | None = None,
+        snr_weighting: str = "none",
+        normalize_snr_weights: bool = False,
+        eps: float = 1e-8,
     ):
         super().__init__()
 
-        if prediction_type not in ["epsilon", "v"]:
-            raise ValueError("prediction_type must be 'epsilon' or 'v'")
+        prediction_type = prediction_type.lower()
+        loss_type = loss_type.lower()
+        snr_weighting = snr_weighting.lower()
+
+        if prediction_type in {"eps", "epsilon"}:
+            prediction_type = "epsilon"
+
+        elif prediction_type in {"v", "v_prediction"}:
+            prediction_type = "v"
+
+        elif prediction_type in {"x0", "sample"}:
+            prediction_type = "x0"
+
+        else:
+            raise ValueError(
+                "prediction_type must be 'epsilon', 'v', or 'x0'"
+            )
+
+        if loss_type not in {"mse", "l1", "huber"}:
+            raise ValueError(
+                "loss_type must be 'mse', 'l1', or 'huber'"
+            )
+
+        if snr_weighting not in {"none", "min_snr"}:
+            raise ValueError(
+                "snr_weighting must be 'none' or 'min_snr'"
+            )
+
+        if snr_weighting == "min_snr" and snr_gamma is None:
+            raise ValueError(
+                "snr_gamma must be set when snr_weighting='min_snr'"
+            )
 
         self.prediction_type = prediction_type
+        self.loss_type = loss_type
+        self.snr_gamma = snr_gamma
+        self.snr_weighting = snr_weighting
+        self.normalize_snr_weights = normalize_snr_weights
+        self.eps = eps
 
     def v_target(self, x0, noise, alpha, sigma):
         return alpha * noise - sigma * x0
 
     def epsilon_target(self, x0, noise):
         return noise
+
+    def x0_target(self, x0):
+        return x0
+
+    def get_target(
+        self,
+        x0: torch.Tensor,
+        noise: torch.Tensor,
+        alpha_t: torch.Tensor,
+        sigma_t: torch.Tensor,
+    ) -> torch.Tensor:
+        if self.prediction_type == "epsilon":
+            return self.epsilon_target(x0, noise)
+
+        if self.prediction_type == "v":
+            return self.v_target(x0, noise, alpha_t, sigma_t)
+
+        if self.prediction_type == "x0":
+            return self.x0_target(x0)
+
+        raise RuntimeError("Invalid prediction type.")
+
+    def elementwise_loss(
+        self,
+        model_output: torch.Tensor,
+        target: torch.Tensor,
+    ) -> torch.Tensor:
+        if self.loss_type == "mse":
+            return F.mse_loss(
+                model_output,
+                target,
+                reduction="none",
+            )
+
+        if self.loss_type == "l1":
+            return F.l1_loss(
+                model_output,
+                target,
+                reduction="none",
+            )
+
+        if self.loss_type == "huber":
+            return F.smooth_l1_loss(
+                model_output,
+                target,
+                reduction="none",
+            )
+
+        raise RuntimeError("Invalid loss type.")
+
+    def get_snr_weights(
+        self,
+        snr: torch.Tensor,
+    ) -> torch.Tensor | None:
+        """
+        Returns per-sample SNR weights.
+
+        snr:
+            [B]
+
+        For Min-SNR:
+            epsilon prediction:
+                weight = min(snr, gamma) / snr
+
+            v prediction:
+                weight = min(snr, gamma) / (snr + 1)
+
+            x0 prediction:
+                weight = min(snr, gamma)
+        """
+        if self.snr_weighting == "none":
+            return None
+
+        if self.snr_weighting == "min_snr":
+            if self.snr_gamma is None:
+                raise RuntimeError("snr_gamma is required for min_snr weighting.")
+
+            snr = snr.float().clamp(min=self.eps)
+
+            gamma = torch.full_like(
+                snr,
+                fill_value=float(self.snr_gamma),
+            )
+
+            clipped_snr = torch.minimum(
+                snr,
+                gamma,
+            )
+
+            if self.prediction_type == "epsilon":
+                weights = clipped_snr / snr
+
+            elif self.prediction_type == "v":
+                weights = clipped_snr / (snr + 1.0)
+
+            elif self.prediction_type == "x0":
+                weights = clipped_snr
+
+            else:
+                raise RuntimeError("Invalid prediction type.")
+
+            if self.normalize_snr_weights:
+                weights = weights / weights.mean().clamp(min=self.eps)
+
+            return weights
+
+        raise RuntimeError("Invalid SNR weighting type.")
 
     def forward(
         self,
@@ -51,28 +198,35 @@ class DiffusionLoss(nn.Module):
         noise: torch.Tensor,
         alpha_t: torch.Tensor,
         sigma_t: torch.Tensor,
+        snr: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """
-        Args:
-            model_output:
-                predicted v or epsilon [B, C, H, W]
 
-            x0:
-                clean latent
+        target = self.get_target(
+            x0=x0,
+            noise=noise,
+            alpha_t=alpha_t,
+            sigma_t=sigma_t,
+        )
 
-            noise:
-                sampled noise
+        loss = self.elementwise_loss(
+            model_output=model_output,
+            target=target,
+        )
 
-            alpha_t, sigma_t:
-                diffusion schedule scalars [B, 1, 1, 1]
-        """
+        # [B, C, H, W] -> [B]
+        loss = loss.mean(
+            dim=tuple(range(1, loss.ndim)),
+        )
 
-        if self.prediction_type == "epsilon":
-            target = self.epsilon_target(x0, noise)
+        if self.snr_weighting != "none":
+            if snr is None:
+                raise ValueError(
+                    "snr must be passed when SNR weighting is enabled."
+                )
 
-        else:  # v-prediction
-            target = self.v_target(x0, noise, alpha_t, sigma_t)
+            weights = self.get_snr_weights(snr)
 
-        loss = F.mse_loss(model_output, target)
+            if weights is not None:
+                loss = loss * weights.to(loss.device)
 
-        return loss
+        return loss.mean()

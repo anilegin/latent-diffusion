@@ -143,6 +143,9 @@ def build_diffusion(cfg: dict) -> GaussianDiffusion:
         beta_end=float(d.get("beta_end", 2e-2)),
         cosine_s=float(d.get("cosine_s", 0.008)),
         max_beta=float(d.get("max_beta", 0.999)),
+        snr_gamma=d.get("snr_gamma", None),
+        snr_weighting=str(d.get("snr_weighting", "none")),
+        normalize_snr_weights=bool(d.get("normalize_snr_weights", False)),
     )
 
     return diffusion

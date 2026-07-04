@@ -48,6 +48,9 @@ class GaussianDiffusion:
         beta_end: float = 2e-2,
         cosine_s: float = 0.008,
         max_beta: float = 0.999,
+        snr_gamma: float | None = None,
+        snr_weighting: str = "none",
+        normalize_snr_weights: bool = False,
     ):
         if schedule is None:
             schedule = create_noise_schedule(
@@ -61,10 +64,10 @@ class GaussianDiffusion:
 
         self.schedule = schedule
         self.prediction_type = prediction_type.lower()
-        self.diffusion_loss = DiffusionLoss(
-            prediction_type=self.prediction_type
-        )
         self.loss_type = loss_type.lower()
+        self.snr_gamma = snr_gamma
+        self.snr_weighting = snr_weighting.lower()
+        self.normalize_snr_weights = normalize_snr_weights
 
         if self.prediction_type not in {"v", "v_prediction", "eps", "epsilon", "x0", "sample"}:
             raise ValueError(
@@ -77,6 +80,14 @@ class GaussianDiffusion:
                 f"Unknown loss_type={loss_type}. "
                 "Use 'mse', 'l1', or 'huber'."
             )
+
+        self.diffusion_loss = DiffusionLoss(
+            prediction_type=self.prediction_type,
+            loss_type=self.loss_type,
+            snr_gamma=self.snr_gamma,
+            snr_weighting=self.snr_weighting,
+            normalize_snr_weights=self.normalize_snr_weights,
+        )
 
     @property
     def num_timesteps(self) -> int:
@@ -201,6 +212,12 @@ class GaussianDiffusion:
             noise=noise,
         )
 
+        target = self.training_target(
+            z_0=z_0,
+            noise=noise,
+            t=t,
+        )
+
         if context is None:
             model_output = model(z_t, t, **model_kwargs)
         else:
@@ -218,19 +235,27 @@ class GaussianDiffusion:
             z_0.shape,
         )
 
+        alpha_bar_t = self.schedule.alphas_cumprod.gather(
+            0,
+            t,
+        )
+
+        snr = alpha_bar_t / (1.0 - alpha_bar_t).clamp(min=1e-8)
+
         loss = self.diffusion_loss(
             model_output=model_output,
             x0=z_0,
             noise=noise,
             alpha_t=alpha_t,
             sigma_t=sigma_t,
+            snr=snr,
         )
 
         return DiffusionTrainingOutput(
             loss=loss,
             simple_loss=loss.detach(),
             model_output=model_output,
-            target=None,  
+            target=target,
             z_t=z_t,
             noise=noise,
             timesteps=t,
