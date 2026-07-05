@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ldm-coco256_strong
+#SBATCH --job-name=ldm-coco256_strong-ft
 #SBATCH --account=iscrc_mnlp26
 #SBATCH --partition=boost_usr_prod
 #SBATCH --nodes=1
@@ -74,7 +74,7 @@ torchrun \
   --nnodes=1 \
   --nproc_per_node=3 \
   scripts/train_ldm_multigpu.py \
-  --config configs/experiments/ldm_coco_256_vpred_strong_ddp.yaml\
+  --config configs/experiments/ldm_coco_256_vpred_strong_ft.yaml\
   --finetune-from outputs/ldm/ldm_coco_256_vae8_strong_vpred_ddp/checkpoints/last.pt
 
 # torchrun \
