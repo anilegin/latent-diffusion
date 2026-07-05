@@ -483,6 +483,7 @@ def train_one_epoch(
 
     loss_sum = 0.0
     num_batches = 0
+    raw_loss_sum = 0.0
 
     iterator = train_loader
     use_tqdm = (
@@ -572,6 +573,8 @@ def train_one_epoch(
 
         reduced_loss = reduce_mean(loss.detach())
         loss_sum += float(reduced_loss.cpu())
+        reduced_raw_loss = reduce_mean(out.simple_loss.detach())
+        raw_loss_sum += float(reduced_raw_loss.cpu())
         num_batches += 1
 
         if use_tqdm and batch_idx % log_every == 0:
@@ -592,6 +595,7 @@ def train_one_epoch(
 
     return {
         "loss": loss_sum / max(1, num_batches),
+        "raw_mse": raw_loss_sum / max(1, num_batches),
     }, global_step
 
 
@@ -956,6 +960,12 @@ def main():
                         )
 
             if is_main_process():
+                metric_str = " ".join(
+                    f"{k}={v:.6f}" if isinstance(v, float) else f"{k}={v}"
+                    for k, v in metrics.items()
+                )
+                print(f"[epoch summary] {metric_str}", flush=True)
+
                 write_metrics(output_dir, metrics)
 
                 if (epoch + 1) % save_every == 0:

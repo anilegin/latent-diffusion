@@ -242,18 +242,22 @@ class GaussianDiffusion:
 
         snr = alpha_bar_t / (1.0 - alpha_bar_t).clamp(min=1e-8)
 
-        loss = self.diffusion_loss(
+        loss_out = self.diffusion_loss(
             model_output=model_output,
             x0=z_0,
             noise=noise,
             alpha_t=alpha_t,
             sigma_t=sigma_t,
             snr=snr,
+            return_dict=True,
         )
+
+        loss = loss_out["loss"]
+        raw_loss = loss_out["raw_loss"]
 
         return DiffusionTrainingOutput(
             loss=loss,
-            simple_loss=loss.detach(),
+            simple_loss=raw_loss.detach(),
             model_output=model_output,
             target=target,
             z_t=z_t,

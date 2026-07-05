@@ -199,7 +199,8 @@ class DiffusionLoss(nn.Module):
         alpha_t: torch.Tensor,
         sigma_t: torch.Tensor,
         snr: torch.Tensor | None = None,
-    ) -> torch.Tensor:
+        return_dict: bool = False,
+    ):
 
         target = self.get_target(
             x0=x0,
@@ -214,9 +215,13 @@ class DiffusionLoss(nn.Module):
         )
 
         # [B, C, H, W] -> [B]
-        loss = loss.mean(
+        per_sample_loss = loss.mean(
             dim=tuple(range(1, loss.ndim)),
         )
+
+        raw_loss = per_sample_loss.mean()
+
+        weights = None
 
         if self.snr_weighting != "none":
             if snr is None:
@@ -227,6 +232,21 @@ class DiffusionLoss(nn.Module):
             weights = self.get_snr_weights(snr)
 
             if weights is not None:
-                loss = loss * weights.to(loss.device)
+                per_sample_loss = per_sample_loss * weights.to(per_sample_loss.device)
 
-        return loss.mean()
+        weighted_loss = per_sample_loss.mean()
+
+        if return_dict:
+            out = {
+                "loss": weighted_loss,
+                "raw_loss": raw_loss.detach(),
+            }
+
+            if weights is not None:
+                out["snr_weight_mean"] = weights.mean().detach()
+                out["snr_weight_min"] = weights.min().detach()
+                out["snr_weight_max"] = weights.max().detach()
+
+            return out
+
+        return weighted_loss
