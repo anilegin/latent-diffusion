@@ -6,8 +6,8 @@ experiment:
   name: ldm_coco_256_vae8_medium_vpred
 
 data:
-  train_latent_dir: outputs/latents/coco_train2017_vae8_scaled_allcaptions
-  val_latent_dir: outputs/latents/coco_val2017_vae8_scaled_allcaptions
+  train_latent_dir: outputs/latents/coco_train2017_vae8_scaled032_allcaptions
+  val_latent_dir: outputs/latents/coco_val2017_vae8_scaled032_allcaptions
 
   train_caption_mode: random
   val_caption_mode: first
