@@ -10,7 +10,7 @@ The project is intended as a compact research codebase for understanding and imp
 
 ---
 
-## Quick Start: Released Hugging Face LDM
+## Quick Start
 
 The released lightweight LDM checkpoint can be used directly from Hugging Face:
 
