@@ -1,0 +1,50 @@
+teacher:
+  model_id: Lykon/dreamshaper-8
+
+student:
+  unet_path: outputs/sd1-5_pruned/unet_option_a_depth1
+
+data:
+  train_latent_dir: outputs/latents/coco_train2017_sd15vae_scaled018215_imagelevel
+  val_latent_dir: outputs/latents/coco_val2017_sd15vae_scaled018215_imagelevel
+  load_latents_to_memory: true
+
+conditioning:
+  max_length: 77
+  cond_drop_prob: 0.1
+  empty_text: ""
+
+loss:
+  distill_weight: 1.0
+  diffusion_weight: 0.25
+
+train:
+  seed: 42
+  precision: bf16
+
+  batch_size: 4
+  gradient_accumulation_steps: 8
+  num_workers: 2
+  pin_memory: true
+
+  max_epochs: 100
+
+  lr: 0.00001
+  warmup_steps: 500
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+
+  grad_clip: 1.0
+
+  log_every: 50
+  validate_every: 1
+  save_every: 1
+
+  resume_from: null
+  finetune_from: null
+
+validation:
+  max_batches: 100
+
+outputs:
+  output_dir: outputs/sd1-5_pruned/distill_dreamshaper8_option_a
