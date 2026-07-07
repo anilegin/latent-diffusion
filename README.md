@@ -4,7 +4,7 @@
 - VAE: [https://huggingface.co/anilegin/lightweight-diffusion-vae](https://huggingface.co/anilegin/lightweight-diffusion-vae)
 - Latent Diffusion Model: [https://huggingface.co/anilegin/lightweight-diffusion-ldm](https://huggingface.co/anilegin/lightweight-diffusion-ldm)
 
-This repository implements a custom latent diffusion text-to-image pipeline trained on COCO 2017 captions. It includes a custom VAE, a CLIP-conditioned latent diffusion U-Net, multi-GPU training, and DDIM/DDPM sampling.
+This repository implements a custom latent diffusion text-to-image pipeline trained on COCO 2017 captions. It includes a custom VAE, a CLIP-conditioned latent diffusion U-Net, and DDIM/DDPM sampling.
 
 The project is intended as a compact research codebase for understanding and improving latent diffusion systems end to end, rather than as a production Stable Diffusion replacement.
 
