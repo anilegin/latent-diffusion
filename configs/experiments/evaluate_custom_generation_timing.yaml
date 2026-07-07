@@ -1,0 +1,37 @@
+evaluation:
+  seed: 42
+  precision: bf16
+  resolution: 256
+  num_prompts: 16
+  output_dir: /leonardo_scratch/large/userexternal/aegin000/latent-diffusion-eval/custom_timing
+  max_images: 500
+  generation_batch_size: 32
+
+data:
+  val_latent_dir: outputs/latents/coco_train2017_vae8_scaled032_allcaptions
+
+vae:
+  config: outputs/vae/vae_coco_256_small/config_used_2026-06-25_03-52-55.yaml
+  checkpoint: outputs/vae/vae_coco_256_small/checkpoints/best.pt
+  scaling_factor: 1.032
+
+ldm:
+  config: outputs/ldm/ldm_coco_256_vae8_strong_vpred_ft/config_used.yaml
+  checkpoint: outputs/ldm/ldm_coco_256_vae8_strong_vpred_ft/checkpoints/best.pt
+
+conditioning:
+  empty_text: ""
+
+text_encoder:
+  model_name: openai/clip-vit-large-patch14
+  local_files_only: true
+
+ddpm:
+  enabled: true
+  guidance_scales: [1.0, 3.0, 5.0]
+
+ddim:
+  enabled: false
+  eta: 0.0
+  steps: [50, 100, 150]
+  guidance_scales: [1.0, 3.0, 5.0]

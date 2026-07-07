@@ -1,0 +1,46 @@
+evaluation:
+  seed: 42
+  precision: fp16
+  resolution: 256
+
+  max_images: 500
+
+  generation_batch_size: 32
+
+  grid_max_images: 64
+
+  output_dir: /leonardo_scratch/large/userexternal/aegin000/latent-diffusion-eval/ldm_text2im_timing
+  monitor_gpu: true
+  gpu_sample_interval: 0.25
+  no_nvidia_smi: false
+
+data:
+  val_latent_dir: outputs/latents/coco_train2017_vae8_scaled032_allcaptions
+  caption_key: captions
+
+# Alternative if you no longer have latent shards:
+# data:
+#   captions_file: outputs/captions/coco_eval_captions.json
+
+ldm:
+  model_name: /leonardo_scratch/large/userexternal/aegin000/hf_models/ldm-text2im-large-256
+  local_files_only: true
+
+  enable_attention_slicing: false
+  enable_xformers_memory_efficient_attention: false
+
+  # Optional loading flags.
+  use_safetensors: null
+  variant: null
+
+conditioning:
+  empty_text: ""
+
+ddpm:
+  enabled: true
+  guidance_scales: [1.0, 3.0, 5.0]
+
+ddim:
+  eta: 0.0
+  steps: [50, 100, 150]
+  guidance_scales: [1.0, 3.0, 5.0]
