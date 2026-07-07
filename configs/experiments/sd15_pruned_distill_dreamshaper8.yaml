@@ -2,7 +2,7 @@ teacher:
   model_id: Lykon/dreamshaper-8
 
 student:
-  unet_path: outputs/sd1-5_pruned/unet_option_a_depth1
+  unet_path: outputs/sd1-5_pruned/depth1
 
 data:
   train_latent_dir: outputs/latents/coco_train2017_sd15vae_scaled018215_imagelevel

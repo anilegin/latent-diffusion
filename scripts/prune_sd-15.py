@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="outputs/sd1-5_pruned/unet_option_a_depth1",
+        default="outputs/sd1-5_pruned/depth1",
     )
 
     parser.add_argument(
