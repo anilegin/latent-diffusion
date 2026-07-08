@@ -8,6 +8,8 @@ This repository implements a custom latent diffusion text-to-image pipeline trai
 
 The project is intended as a compact research codebase for understanding and improving latent diffusion systems end to end, rather than as a production Stable Diffusion replacement.
 
+Dataset: [COCO2017](https://cocodataset.org/#home). COCO, short for Common Objects in Context, is a large-scale vision dataset widely used for image captioning, object detection, segmentation, and visual question answering. It contains everyday scenes with rich annotations, making it useful for training models to understand objects and their context. This split has around 118,000 training images with captions and 5,000 validation images.
+
 ---
 
 ## Quick Start
