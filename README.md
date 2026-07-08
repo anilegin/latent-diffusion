@@ -193,6 +193,19 @@ Timing is reported as end-to-end evaluation time averaged over 16 generation bat
 
 The Strong custom model gives the best FID among the custom models and is also slightly better than the 872M-parameter LDM text2image reference on FID in this 500-image evaluation. The LDM text2image reference still obtains the strongest CLIP scores and Inception Scores, especially with DDPM.
 
+### Qualitative comparison samples
+
+Custom LDM samples are shown next to the reference `CompVis/ldm-text2im-large-256` generations for the same COCO prompts.
+
+| Index | Prompt | Custom LDM | LDM text2image |
+|---:|---|---|---|
+| 0 | A man with a red helmet on a small moped on a dirt road. | <img src="assets/custom_ldm/sample_0000.png" width="180" alt="Custom LDM sample 0"> | <img src="assets/ldmtext2image/sample_0000.png" width="180" alt="LDM text2image sample 0"> |
+| 60 | This shot is of a crowded highway full of traffic | <img src="assets/custom_ldm/sample_0060.png" width="180" alt="Custom LDM sample 60"> | <img src="assets/ldmtext2image/sample_0060.png" width="180" alt="LDM text2image sample 60"> |
+| 69 | A bathroom sink sitting under a large mirror. | <img src="assets/custom_ldm/sample_0069.png" width="180" alt="Custom LDM sample 69"> | <img src="assets/ldmtext2image/sample_0069.png" width="180" alt="LDM text2image sample 69"> |
+| 153 | A lone giraffe walking in an open field. | <img src="assets/custom_ldm/sample_0153.png" width="180" alt="Custom LDM sample 153"> | <img src="assets/ldmtext2image/sample_0153.png" width="180" alt="LDM text2image sample 153"> |
+| 182 | A little girl in a pink shirt standing near a blue metal sculpture. | <img src="assets/custom_ldm/sample_0182.png" width="180" alt="Custom LDM sample 182"> | <img src="assets/ldmtext2image/sample_0182.png" width="180" alt="LDM text2image sample 182"> |
+| 184 | A red fire hydrant is leaking onto a side walk. | <img src="assets/custom_ldm/sample_0184.png" width="180" alt="Custom LDM sample 184"> | <img src="assets/ldmtext2image/sample_0184.png" width="180" alt="LDM text2image sample 184"> |
+
 
 ### Timing overview
 
