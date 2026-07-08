@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=vae-coco256-evaluate
-#SBATCH --account=iscrc_mnlp26
+# Replace with your Slurm account, or remove if unused.
+#SBATCH --account=<SLURM_ACCOUNT>
 #SBATCH --partition=boost_usr_prod
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -13,7 +14,9 @@
 
 set -euo pipefail
 
+# Path to this repository checkout.
 PROJECT_DIR="$HOME/projects/latent-diffusion"
+# Path to the Python virtual environment.
 VENV_DIR="$PROJECT_DIR/ldm_env"
 
 CONFIG_PATH="configs/experiments/vae_coco_256.yaml"

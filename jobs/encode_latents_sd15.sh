@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=vae-coco256-encode-latents-sd15
-#SBATCH --account=iscrc_mnlp26
+# Replace with your Slurm account, or remove if unused.
+#SBATCH --account=<SLURM_ACCOUNT>
 #SBATCH --partition=boost_usr_prod
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -13,10 +14,17 @@
 
 set -euo pipefail
 
+# Path to this repository checkout.
 PROJECT_DIR="$HOME/projects/latent-diffusion"
+# Path to the Python virtual environment.
 VENV_DIR="$PROJECT_DIR/ldm_env"
 
 CONFIG_PATH="configs/experiments/vae_coco_256.yaml"
+
+# Path to local COCO 2017 image folders.
+COCO_IMAGE_ROOT="/path/to/coco2017/images"
+# Path to local COCO 2017 annotation files.
+COCO_ANNOTATION_ROOT="/path/to/coco2017/annotations"
 
 cd "$PROJECT_DIR"
 mkdir -p logs outputs/vae outputs/samples cache
@@ -63,8 +71,8 @@ echo "============================================="
 
 python scripts/encode_latents_sd15.py \
   --model-id Lykon/dreamshaper-8 \
-  --images-dir /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017/images/train2017 \
-  --captions-json /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017/annotations/captions_train2017.json \
+  --images-dir "$COCO_IMAGE_ROOT/train2017" \
+  --captions-json "$COCO_ANNOTATION_ROOT/captions_train2017.json" \
   --output-dir outputs/latents/coco_train2017_sd15vae_scaled018215_allcaptions \
   --batch-size 32 \
   --shard-size 5000
@@ -75,8 +83,8 @@ echo "============================================="
 
 python scripts/encode_latents_sd15.py \
   --model-id Lykon/dreamshaper-8 \
-  --images-dir /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017/images/val2017 \
-  --captions-json /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017/annotations/captions_val2017.json \
+  --images-dir "$COCO_IMAGE_ROOT/val2017" \
+  --captions-json "$COCO_ANNOTATION_ROOT/captions_val2017.json" \
   --output-dir outputs/latents/coco_val2017_sd15vae_scaled018215_allcaptions \
   --batch-size 32 \
   --shard-size 5000
