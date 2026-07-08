@@ -28,17 +28,6 @@ conditioning:
   cond_drop_prob: 0.1
   empty_text: ""
 
-diffusion:
-  schedule_type: cosine
-  num_timesteps: 1000
-  prediction_type: v
-  loss_type: mse
-
-  beta_start: 0.0001
-  beta_end: 0.02
-  cosine_s: 0.008
-  max_beta: 0.999
-
 train:
   seed: 42
   precision: bf16
