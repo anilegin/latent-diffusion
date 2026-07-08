@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import yaml
 from PIL import Image
 from tqdm import tqdm
 
@@ -20,6 +19,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.utils.timer import Timer
 from src.utils.gpu_monitor import GPUMonitor
+from src.utils.evaluation import load_yaml, safe_torch_load
 
 
 DEFAULT_LDM_TEXT2IM_MODEL = "CompVis/ldm-text2im-large-256"
@@ -32,14 +32,6 @@ def parse_args():
     parser.add_argument("--gpu-sample-interval", type=float, default=0.25, help="Seconds between nvidia-smi utilization samples.")
     parser.add_argument("--no-nvidia-smi", action="store_true", help="Disable nvidia-smi utilization sampling and keep only PyTorch CUDA memory stats.")
     return parser.parse_args()
-
-
-def load_yaml(path: str | Path) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    if data is None:
-        raise RuntimeError(f"Empty YAML config: {path}")
-    return data
 
 
 def get_dtype(name: str):
@@ -55,16 +47,6 @@ def get_dtype(name: str):
 
 def sanitize_float(x: float) -> str:
     return str(x).replace(".", "p")
-
-
-def safe_torch_load(path: str | Path, map_location="cpu"):
-    """Load local latent shards safely on newer PyTorch, with fallback for older files."""
-    try:
-        return torch.load(path, map_location=map_location, weights_only=True)
-    except TypeError:
-        return torch.load(path, map_location=map_location)
-    except Exception:
-        return torch.load(path, map_location=map_location)
 
 
 def save_image_grid(images: list[Image.Image], path: str | Path, nrow: int | None = None, padding: int = 2):

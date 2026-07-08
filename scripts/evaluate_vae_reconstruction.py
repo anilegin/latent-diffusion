@@ -17,6 +17,7 @@ from src.data.coco_captions import CocoCaptionsDataset
 from src.data.image_transforms import build_image_transform
 from src.network.autoencoder.vae import AutoencoderKL
 from src.utils.config import load_config, resolve_path_key
+from src.utils.evaluation import compute_fid_from_features
 
 
 def parse_args():
@@ -318,69 +319,6 @@ def inception_features(
 
     return feats.float()
 
-
-def calculate_frechet_distance(
-    mu1: np.ndarray,
-    sigma1: np.ndarray,
-    mu2: np.ndarray,
-    sigma2: np.ndarray,
-    eps: float = 1e-6,
-) -> float:
-    """
-    FID formula:
-
-        ||mu1 - mu2||^2 + Tr(sigma1 + sigma2 - 2 * sqrt(sigma1 sigma2))
-    """
-    from scipy import linalg
-
-    mu1 = np.atleast_1d(mu1)
-    mu2 = np.atleast_1d(mu2)
-
-    sigma1 = np.atleast_2d(sigma1)
-    sigma2 = np.atleast_2d(sigma2)
-
-    diff = mu1 - mu2
-
-    covmean, _ = linalg.sqrtm(
-        sigma1.dot(sigma2),
-        disp=False,
-    )
-
-    if not np.isfinite(covmean).all():
-        offset = np.eye(sigma1.shape[0]) * eps
-        covmean = linalg.sqrtm(
-            (sigma1 + offset).dot(sigma2 + offset)
-        )
-
-    if np.iscomplexobj(covmean):
-        covmean = covmean.real
-
-    fid = (
-        diff.dot(diff)
-        + np.trace(sigma1)
-        + np.trace(sigma2)
-        - 2.0 * np.trace(covmean)
-    )
-
-    return float(fid)
-
-
-def compute_fid_from_features(
-    real_features: np.ndarray,
-    recon_features: np.ndarray,
-) -> float:
-    mu_real = np.mean(real_features, axis=0)
-    mu_recon = np.mean(recon_features, axis=0)
-
-    sigma_real = np.cov(real_features, rowvar=False)
-    sigma_recon = np.cov(recon_features, rowvar=False)
-
-    return calculate_frechet_distance(
-        mu_real,
-        sigma_real,
-        mu_recon,
-        sigma_recon,
-    )
 
 
 @torch.no_grad()
