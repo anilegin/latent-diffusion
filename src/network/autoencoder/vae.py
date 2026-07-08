@@ -3,9 +3,9 @@ from __future__ import annotations
 import torch
 from torch import nn
 
-from src.models.autoencoder.encoder import Encoder
-from src.models.autoencoder.decoder import Decoder
-from src.models.autoencoder.distributions import DiagonalGaussianDistribution
+from src.network.autoencoder.encoder import Encoder
+from src.network.autoencoder.decoder import Decoder
+from src.network.autoencoder.distributions import DiagonalGaussianDistribution
 
 
 class AutoencoderKL(nn.Module):

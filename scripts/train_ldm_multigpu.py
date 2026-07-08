@@ -22,9 +22,9 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.data.latent_dataset import LatentShardDataset, latent_collate_fn
 from src.diffusion.gaussian_diffusion import GaussianDiffusion
-from src.models.conditioning.clip_text import FrozenCLIPTextEncoder
-from src.models.conditioning.null_conditioning import ClassifierFreeGuidanceConditioner
-from src.models.diffusion.unet import (
+from src.network.conditioning.clip_text import FrozenCLIPTextEncoder
+from src.network.conditioning.null_conditioning import ClassifierFreeGuidanceConditioner
+from src.network.diffusion.unet import (
     build_latent_diffusion_unet_from_config,
     count_parameters,
 )

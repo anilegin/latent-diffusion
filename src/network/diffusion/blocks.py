@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from src.models.diffusion.attention import SpatialTransformer
+from src.network.diffusion.attention import SpatialTransformer
 
 
 def normalization(

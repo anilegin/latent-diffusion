@@ -14,10 +14,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.diffusion.gaussian_diffusion import GaussianDiffusion
 from src.diffusion.samplers import DDPMSampler, DDIMSampler
-from src.models.autoencoder.vae import AutoencoderKL
-from src.models.conditioning.clip_text import FrozenCLIPTextEncoder
-from src.models.conditioning.null_conditioning import ClassifierFreeGuidanceConditioner
-from src.models.diffusion.unet import build_latent_diffusion_unet_from_config
+from src.network.autoencoder.vae import AutoencoderKL
+from src.network.conditioning.clip_text import FrozenCLIPTextEncoder
+from src.network.conditioning.null_conditioning import ClassifierFreeGuidanceConditioner
+from src.network.diffusion.unet import build_latent_diffusion_unet_from_config
 from src.utils.config import load_config, resolve_path_key, save_yaml
 
 

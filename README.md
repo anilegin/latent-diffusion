@@ -355,9 +355,9 @@ scripts/
 └── sample_text2image.py
 
 src/
-├── models/autoencoder/
-├── models/diffusion/
-├── models/conditioning/
+├── network/autoencoder/
+├── network/diffusion/
+├── network/conditioning/
 ├── diffusion/
 ├── losses/
 └── data/

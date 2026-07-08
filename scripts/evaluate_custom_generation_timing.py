@@ -18,8 +18,8 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.diffusion.gaussian_diffusion import GaussianDiffusion
 from src.diffusion.samplers import DDPMSampler, DDIMSampler
-from src.models.conditioning.clip_text import FrozenCLIPTextEncoder
-from src.models.diffusion.unet import build_latent_diffusion_unet_from_config
+from src.network.conditioning.clip_text import FrozenCLIPTextEncoder
+from src.network.diffusion.unet import build_latent_diffusion_unet_from_config
 from src.utils.config import load_config
 from src.utils.timer import Timer
 from src.utils.gpu_monitor import GPUMonitor
@@ -141,7 +141,7 @@ def load_vae_from_config(config_path: str | Path, checkpoint_path: str | Path, d
     model_cfg.pop("name", None)
 
     try:
-        from src.models.autoencoder.vae import AutoencoderKL
+        from src.network.autoencoder.vae import AutoencoderKL
         vae = AutoencoderKL(**model_cfg)
     except Exception as exc:
         raise RuntimeError(

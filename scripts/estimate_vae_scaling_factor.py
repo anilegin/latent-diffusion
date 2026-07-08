@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.data.coco_captions import CocoCaptionsDataset
 from src.data.image_transforms import build_image_transform
-from src.models.autoencoder.vae import AutoencoderKL
+from src.network.autoencoder.vae import AutoencoderKL
 from src.utils.config import load_config, resolve_path_key
 
 

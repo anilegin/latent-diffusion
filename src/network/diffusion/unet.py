@@ -4,8 +4,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from src.models.diffusion.timestep import TimestepEmbedding
-from src.models.diffusion.blocks import (
+from src.network.diffusion.timestep import TimestepEmbedding
+from src.network.diffusion.blocks import (
     DownBlock,
     MiddleBlock,
     UpBlock,

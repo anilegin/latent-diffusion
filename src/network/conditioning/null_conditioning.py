@@ -5,7 +5,7 @@ import random
 import torch
 from torch import nn
 
-from src.models.conditioning.clip_text import FrozenCLIPTextEncoder
+from src.network.conditioning.clip_text import FrozenCLIPTextEncoder
 
 
 class ClassifierFreeGuidanceConditioner(nn.Module):

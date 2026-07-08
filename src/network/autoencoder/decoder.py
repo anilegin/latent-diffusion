@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from src.models.autoencoder.blocks import (
+from src.network.autoencoder.blocks import (
     ResBlock,
     Upsample,
     MidBlock,
