@@ -1,0 +1,102 @@
+project:
+  root: .
+data:
+  coco_root: /path/to/coco2017
+  train_latent_dir: outputs/latents/coco_train2017_vae8_scaled032_allcaptions
+  val_latent_dir: outputs/latents/coco_val2017_vae8_scaled032_allcaptions
+  train_caption_mode: random
+  val_caption_mode: first
+  load_latents_to_memory: true
+outputs:
+  root: outputs
+  vae_dir: outputs/vae
+  ldm_dir: outputs/ldm
+  latent_dir: outputs/latents
+  sample_dir: outputs/samples
+  log_dir: logs
+cache:
+  root: cache
+model:
+  name: latent_diffusion_unet_strong
+  in_channels: 8
+  out_channels: 8
+  latent_size: 32
+  base_channels: 304
+  channel_multipliers:
+  - 1
+  - 2
+  - 4
+  num_res_blocks: 3
+  dropout: 0.0
+  attention_resolutions:
+  - 16
+  - 8
+  use_middle_attention: true
+  context_dim: 768
+  num_heads: 8
+  head_dim: 64
+  transformer_depth: 1
+  time_embedding_dim: null
+experiment:
+  name: ldm_coco_256_vae8_strong_vpred_ft
+text_encoder:
+  model_name: openai/clip-vit-large-patch14
+  max_length: 77
+  freeze: true
+  use_last_hidden_state: true
+conditioning:
+  cond_drop_prob: 0.05
+  empty_text: ''
+diffusion:
+  schedule_type: cosine
+  num_timesteps: 1000
+  prediction_type: v
+  loss_type: mse
+  beta_start: 0.0001
+  beta_end: 0.02
+  cosine_s: 0.008
+  max_beta: 0.999
+  snr_weighting: min_snr
+  snr_gamma: 5.0
+  normalize_snr_weights: false
+train:
+  seed: 42
+  precision: bf16
+  batch_size: 2
+  gradient_accumulation_steps: 12
+  num_workers: 2
+  pin_memory: true
+  max_epochs: 100
+  lr: 0.0001
+  min_lr: 5.0e-05
+  scheduler: cosine
+  warmup_steps: 2000
+  weight_decay: 0.01
+  betas:
+  - 0.9
+  - 0.999
+  grad_clip: 1.0
+  log_every: 50
+  validate_every: 1
+  save_every: 1
+  output_dir_key: outputs.ldm_dir
+  resume_from: null
+  finetune_from: outputs/ldm/ldm_coco_256_vae8_strong_vpred_ft/checkpoints/last.pt
+validation:
+  enabled: true
+  max_batches: 100
+  bucket_max_batches: 25
+  timestep_buckets:
+  - - 0
+    - 100
+  - - 100
+    - 300
+  - - 300
+    - 700
+  - - 700
+    - 1000
+optimizer:
+  name: adamw
+distributed:
+  enabled: true
+  backend: nccl

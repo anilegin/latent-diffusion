@@ -6,7 +6,7 @@
 
 # python evaluate_ldm_metrics.py \
 #   --config path/to/your_eval_config.yaml \
-#   --generated-root /leonardo_scratch/large/userexternal/aegin000/latent-diffusion-eval/custom_timing \
+#   --generated-root outputs/eval/custom_timing \
 #   --output-dir outputs/ldm_metrics \
 #   --metrics fid kid is clip \
 #   --force-rebuild-reference

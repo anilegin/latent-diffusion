@@ -65,7 +65,7 @@ echo "Resuming VAE training..."
 echo "============================================="
 
 python scripts/train_vae.py \
-    --config outputs/vae/vae_coco_256_small/config_used_2026-06-23_21-41-16.yaml \
+    --config outputs/vae/vae_coco_256_small/config_used.yaml \
     --resume-from outputs/vae/vae_coco_256_small/checkpoints/last.pt
 
 echo "============================================="

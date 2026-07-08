@@ -65,7 +65,7 @@ echo "VAE Evaluation..."
 echo "============================================="
 
 python scripts/evaluate_vae_reconstruction.py \
-  --config outputs/vae/vae_coco_256_small/config_used_2026-06-25_03-52-55.yaml \
+  --config outputs/vae/vae_coco_256_small/config_used.yaml \
   --checkpoint outputs/vae/vae_coco_256_small/checkpoints/best.pt \
   --split val2017 \
   --num-images 5000 \

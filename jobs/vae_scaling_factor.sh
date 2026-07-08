@@ -65,7 +65,7 @@ echo "VAE Scaling Factor..."
 echo "============================================="
 
 python scripts/estimate_vae_scaling_factor.py \
-  --config outputs/vae/vae_coco_256_small/config_used_2026-06-25_03-52-55.yaml \
+  --config outputs/vae/vae_coco_256_small/config_used.yaml \
   --checkpoint outputs/vae/vae_coco_256_small/checkpoints/best.pt \
   --split train2017 \
   --num-images 100000 \

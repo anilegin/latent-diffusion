@@ -1,7 +1,7 @@
 project:
   root: .
 data:
-  coco_root: /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017
+  coco_root: /path/to/coco2017
 outputs:
   root: outputs
   vae_dir: outputs/vae
