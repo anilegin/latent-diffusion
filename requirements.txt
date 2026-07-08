@@ -1,7 +1,10 @@
 --index-url https://download.pytorch.org/whl/cu121
+--extra-index-url https://pypi.org/simple
+
 torch
 torchvision
 torchaudio
+
 numpy<2.0
 scipy
 pandas
@@ -18,7 +21,6 @@ datasets==2.21.0
 tokenizers
 huggingface_hub
 diffusers==0.30.3
-datasets
 omegaconf
 pyyaml
 wandb
@@ -27,7 +29,7 @@ lpips
 clean-fid
 scikit-image
 scikit-learn
-#albumentations
+# albumentations
 webdataset
 ftfy
 regex
