@@ -217,10 +217,9 @@ Custom LDM samples are shown next to the reference `CompVis/ldm-text2im-large-25
 | Light | ~40M | DDIM | 100 | 3.81 s | 0.122 s |
 | Light | ~40M | DDIM | 150 | 5.32 s | 0.170 s |
 | Light | ~40M | DDPM | 1000 | 29.74 s | 0.952 s |
-| Medium | ~160M | DDIM | 50 | 5.51 s | 0.176 s |
-| Medium | ~160M | DDIM | 100 | 10.19 s | 0.326 s |
-| Medium | ~160M | DDIM | 150 | 14.88 s | 0.476 s |
-| Medium | ~160M | DDPM | 1000 | 93.99 s | 3.008 s |
+| Medium | ~160M | DDIM | 50 | 3.43 s | 0.110 s |
+| Medium | ~160M | DDIM | 100 | 6.20 s | 0.198 s |
+| Medium | ~160M | DDPM | 1000 | 55.57  s | 1.551 s |
 | Strong | ~450M | DDIM | 50 | 4.54 s | 0.145 s |
 | Strong | ~450M | DDIM | 100 | 8.59 s | 0.275 s |
 | Strong | ~450M | DDIM | 150 | 12.66 s | 0.405 s |
