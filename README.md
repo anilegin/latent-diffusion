@@ -12,7 +12,9 @@ The project is intended as a compact research codebase for understanding and imp
 
 ## Quick Start
 
-The released lightweight LDM checkpoint can be used directly from Hugging Face:
+You can easily try out the custom Diffusion model through [Colab](https://colab.research.google.com/drive/1f4ZXEfXSt6tzPHSRIoija2U8gsWwYd-I?usp=sharing](Colab:))
+
+The released lightweight LDM checkpoint can also be used directly from Hugging Face:
 
 ```bash
 git clone https://huggingface.co/anilegin/lightweight-diffusion-ldm
