@@ -20,7 +20,8 @@ text_encoder:
   freeze: true
   use_last_hidden_state: true
 
-  cache_dir: /leonardo_scratch/large/userexternal/aegin000/hf_cache
+  # Hugging Face cache directory.
+  cache_dir: cache/huggingface
   local_files_only: true
 
 conditioning:

@@ -3,7 +3,8 @@ evaluation:
   precision: bf16
   resolution: 256
   num_prompts: 16
-  output_dir: /leonardo_scratch/large/userexternal/aegin000/latent-diffusion-eval/custom_timing
+  # Directory for generated timing/evaluation artifacts.
+  output_dir: outputs/eval/custom_timing
   max_images: 500
   generation_batch_size: 32
 

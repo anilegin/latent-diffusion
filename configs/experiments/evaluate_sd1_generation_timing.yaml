@@ -9,7 +9,8 @@ evaluation:
 
   grid_max_images: 64
 
-  output_dir: /leonardo_scratch/large/userexternal/aegin000/latent-diffusion-eval/ldm_text2im_timing
+  # Directory for generated timing/evaluation artifacts.
+  output_dir: outputs/eval/ldm_text2im_timing
   monitor_gpu: true
   gpu_sample_interval: 0.25
   no_nvidia_smi: false
@@ -23,7 +24,8 @@ data:
 #   captions_file: outputs/captions/coco_eval_captions.json
 
 ldm:
-  model_name: /leonardo_scratch/large/userexternal/aegin000/hf_models/ldm-text2im-large-256
+  # Hugging Face model ID, or a local model directory.
+  model_name: CompVis/ldm-text2im-large-256
   local_files_only: true
 
   enable_attention_slicing: false

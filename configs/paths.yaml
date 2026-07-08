@@ -2,7 +2,8 @@ project:
   root: .
 
 data:
-  coco_root: /leonardo_scratch/large/userexternal/aegin000/datasets/coco2017
+  # Path to local COCO 2017 dataset root.
+  coco_root: /path/to/coco2017
 
 outputs:
   root: outputs
