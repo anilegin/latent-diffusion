@@ -508,6 +508,37 @@ Strong custom LDM comparison memory: ~2.23 GB
 LDM text2image total memory: ~6.15 GB
 ```
 
+## Training Details
+
+### VAE training
+
+The custom VAE was trained as the first stage of the pipeline, before any latent diffusion model training. It was trained from scratch on COCO 2017 training images resized to 256×256.
+
+The goal of this stage was to learn a compact latent image representation that could later be used by the diffusion model. The VAE compresses each image into an 8-channel latent tensor and reconstructs the image from that latent representation.
+
+In the main experiment, the VAE was trained once on a single A100 GPU for approximately 24 hours. After training, the best checkpoint was selected based on validation reconstruction quality.
+
+After the VAE was trained, we estimated the latent scaling factor on COCO training images. The estimated scaling factor was approximately 1.032. This factor was used when caching latents for diffusion training: encoded latents were multiplied by the scaling factor before being saved to align vae space with diffusion.
+
+### LDM training - Strong Model
+
+The Strong latent diffusion model is the largest custom U-Net trained in this project, with roughly 450M parameters. It was trained on the cached 8-channel COCO latents produced by the custom VAE.
+
+The model was trained as a text-conditioned latent diffusion model. The model was trained with v-prediction and classifier-free guidance dropout, so some captions were randomly replaced with the empty string during training.
+
+Training was done in several stages instead of one single run.
+
+First, the Strong U-Net was trained from scratch on the cached COCO latents. This initial stage established the main denoising model and used the standard latent diffusion objective with v-prediction.
+
+Second, the same model was continued from its latest checkpoint using the same general setup. This continuation stage was used to keep improving the model without restarting from random weights. When the objective and configuration stayed the same, training was resumed in the usual way so the optimizer and scheduler state could continue from the previous run. So far model is trained 48hrs with single A100.
+
+Third, the model was fine-tuned from an existing Strong checkpoint with a modified loss setup. In this final stage, Min-SNR loss weighting was enabled. This time we focused on later timesteps and increased its weight.
+
+The final Strong model therefore comes from a staged process: initial training from scratch, continued training from checkpoint, and final fine-tuning with Min-SNR weighting. The final checkpoint used for sampling and evaluation is the fine-tuned Strong v-prediction model.
+
+This final model uses the custom 8-channel VAE latents, the estimated latent scaling factor, frozen CLIP text conditioning, classifier-free guidance, v-prediction, and Min-SNR fine-tuning. It is the Strong custom LDM reported in the evaluation tables.
+
+
 ---
 
 ## Disclaimer
