@@ -58,7 +58,7 @@ Inside this repository, use `scripts/sample_text2image.py` to generate images fr
 ```bash
 python scripts/sample_text2image.py \
   --config configs/experiments/sample_coco_256.yaml \
-  --ldm-checkpoint outputs/ldm/ldm_coco_256_vae8_strong_vpred_ddp/checkpoints/best.pt \
+  --ldm-checkpoint outputs/ldm/ldm_coco_256_vae8_strong_vpred_ft/checkpoints/best.pt \
   --vae-checkpoint outputs/vae/vae_coco_256_small/checkpoints/best.pt \
   --prompt "a dog running through grass" \
   --num-steps 100 \
